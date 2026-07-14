@@ -1,0 +1,8 @@
+# Default owners for everything in this repo.
+# Any team members added later can be appended here.
+*       @verifisecurity
+
+# Security policy and CI/mirror plumbing require owner review.
+/SECURITY.md            @verifisecurity
+/.github/               @verifisecurity
+/LICENSE                @verifisecurity

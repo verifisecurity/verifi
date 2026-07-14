@@ -1,0 +1,39 @@
+# One-way mirror: GitHub (canonical, public) -> GitLab (private group copy).
+# GitHub is the only place you push directly; this keeps the GitLab copy in sync.
+#
+# Setup (one-time):
+#   1. GitLab -> verifi-security-platform/verifi-cli -> Settings -> Repository ->
+#      Deploy tokens: create a token with `write_repository` scope.
+#   2. GitHub -> verifi-cli -> Settings -> Secrets and variables -> Actions:
+#        GITLAB_MIRROR_USER  = the deploy-token username
+#        GITLAB_MIRROR_TOKEN = the deploy-token value
+name: Mirror to GitLab
+
+on:
+  push:
+    branches: [main]
+    tags: ["*"]
+  workflow_dispatch:
+
+# Avoid concurrent pushes clobbering each other.
+concurrency:
+  group: mirror-to-gitlab
+  cancel-in-progress: false
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (full history)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Push main + tags to GitLab
+        env:
+          GITLAB_MIRROR_USER: ${{ secrets.GITLAB_MIRROR_USER }}
+          GITLAB_MIRROR_TOKEN: ${{ secrets.GITLAB_MIRROR_TOKEN }}
+        run: |
+          git push --force \
+            "https://${GITLAB_MIRROR_USER}:${GITLAB_MIRROR_TOKEN}@gitlab.com/verifi-security-platform/verifi-cli.git" \
+            "HEAD:refs/heads/main" --tags
