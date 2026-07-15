@@ -1,0 +1,47 @@
+# GoReleaser config for the Verifi CLI.
+# Cross-compiles static binaries and publishes them (plus a checksums file) to
+# a GitHub Release when a v* tag is pushed. See .github/workflows/release.yml.
+#
+# Try it locally without publishing:  goreleaser release --snapshot --clean
+version: 2
+
+project_name: verifi
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: verifi
+    main: .
+    binary: verifi
+    env:
+      - CGO_ENABLED=0
+    goos: [linux, darwin, windows]
+    goarch: [amd64, arm64]
+    ldflags:
+      - -s -w
+      - -X main.version={{ .Version }}
+      - -X main.commit={{ .ShortCommit }}
+      - -X main.date={{ .Date }}
+
+archives:
+  # Version-independent names so install.sh can use the stable
+  # /releases/latest/download/<asset> redirect.
+  - id: verifi
+    name_template: "verifi_{{ .Os }}_{{ .Arch }}"
+
+checksum:
+  name_template: checksums.txt
+  algorithm: sha256
+
+release:
+  github:
+    owner: verifi-security-platform
+    name: verifi-cli
+  draft: false
+  prerelease: auto
+
+changelog:
+  use: github
+  sort: asc

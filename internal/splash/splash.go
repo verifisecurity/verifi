@@ -1,20 +1,10 @@
-// Prototype: the `verifi` welcome splash.
+// Package splash renders the `verifi` welcome screen: muted boxes of varying
+// sizes fall down a blackish gradient (the website hero motif), then fade out
+// as the solid VERIFI wordmark and a "coming soon · beta" line settle in.
 //
-// A short terminal intro that mirrors the website hero: muted "boxes" of
-// varying sizes fall down a blackish gradient, then fade out as the solid
-// VERIFI wordmark and a "coming soon · beta" line settle in on top.
-//
-// This is a DESIGN prototype, not the real CLI. Stdlib only, no deps, so you
-// can run and tune it in seconds:
-//
-//	cd prototypes/splash && go run .
-//
-// Flags:
-//	--static   skip the animation, just print the settled banner
-//	--loop     replay forever (until Ctrl-C), handy while tuning
-//
-// Everything you'd want to tweak lives in the TUNABLES block below.
-package main
+// Stdlib only, no dependencies, by design: this is a security tool's own CLI,
+// so keeping its dependency surface at zero is a feature, not a limitation.
+package splash
 
 import (
 	"fmt"
@@ -28,6 +18,7 @@ import (
 )
 
 // ---------------------------- TUNABLES ----------------------------
+// Tweak these to change the look; everything visual lives here.
 
 const (
 	canvasW = 56 // panel width in cells
@@ -39,7 +30,7 @@ const (
 	holdSeconds   = 1.6 // hold the finished banner
 
 	spawnChance = 0.55 // 0..1, probability of a new box each frame
-	blockDim    = 0.55 // dim the bright web palette toward "low opacity" look
+	blockDim    = 0.55 // dim the bright web palette toward the "low opacity" look
 	bottomFade  = 0.66 // boxes start fading below this fraction of the height
 )
 
@@ -58,6 +49,34 @@ var (
 )
 
 // ------------------------------------------------------------------
+
+// Show renders the welcome. It animates when stdout is a real terminal;
+// otherwise (piped, CI) it prints the static banner. Pass loop to replay.
+func Show(loop bool) {
+	if !isTTY() {
+		Static()
+		return
+	}
+
+	sig := make(chan os.Signal, 1)
+	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
+	go func() { <-sig; showCursor(); os.Exit(0) }()
+
+	hideCursor()
+	defer showCursor()
+
+	for {
+		playOnce()
+		if !loop {
+			break
+		}
+		fmt.Print(cursorUp(canvasH))
+	}
+	fmt.Println()
+}
+
+// Static prints just the settled banner, no animation.
+func Static() { fmt.Print(renderFrame(nil, 0, 1)) }
 
 type rgb struct{ r, g, b float64 }
 
@@ -189,14 +208,14 @@ func drawText(grid [][]cell, row int, s string, col rgb) {
 	if row < 0 || row >= canvasH {
 		return
 	}
-	col2 := 0
+	x := 0
 	for _, r := range s {
-		if col2 >= canvasW {
+		if x >= canvasW {
 			break
 		}
-		grid[row][col2].ch = r
-		grid[row][col2].fg = col
-		col2++
+		grid[row][x].ch = r
+		grid[row][x].fg = col
+		x++
 	}
 }
 
@@ -230,15 +249,6 @@ func spawnBox() box {
 	}
 }
 
-func isTTY() bool {
-	fi, err := os.Stdout.Stat()
-	return err == nil && fi.Mode()&os.ModeCharDevice != 0
-}
-
-func hideCursor() { fmt.Print("\033[?25l") }
-func showCursor() { fmt.Print("\033[?25h") }
-func cursorUp(n int) string { return fmt.Sprintf("\033[%dA", n) }
-
 func playOnce() {
 	boxes := []box{}
 	frame := time.Second / fps
@@ -264,7 +274,6 @@ func playOnce() {
 			wordAlpha = 1
 		}
 
-		// Advance boxes; drop ones that fell off.
 		kept := boxes[:0]
 		for _, b := range boxes {
 			b.y += b.speed
@@ -284,41 +293,11 @@ func playOnce() {
 	}
 }
 
-func printStatic() {
-	fmt.Print(renderFrame(nil, 0, 1))
+func isTTY() bool {
+	fi, err := os.Stdout.Stat()
+	return err == nil && fi.Mode()&os.ModeCharDevice != 0
 }
 
-func main() {
-	static := false
-	loop := false
-	for _, a := range os.Args[1:] {
-		switch a {
-		case "--static":
-			static = true
-		case "--loop":
-			loop = true
-		}
-	}
-
-	if static || !isTTY() {
-		printStatic()
-		return
-	}
-
-	// Restore the cursor on Ctrl-C.
-	sig := make(chan os.Signal, 1)
-	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
-	go func() { <-sig; showCursor(); os.Exit(0) }()
-
-	hideCursor()
-	defer showCursor()
-
-	for {
-		playOnce()
-		if !loop {
-			break
-		}
-		fmt.Print(cursorUp(canvasH))
-	}
-	fmt.Println()
-}
+func hideCursor()          { fmt.Print("\033[?25l") }
+func showCursor()          { fmt.Print("\033[?25h") }
+func cursorUp(n int) string { return fmt.Sprintf("\033[%dA", n) }
