@@ -32,10 +32,8 @@ Please include:
 
 In scope: the code in this repository and the released `verifi` binaries.
 
-Out of scope here: vulnerabilities in the Verifi backend services (report those to the
-same address, and we will route them internally) and issues in third-party dependencies
-that are already publicly known — though we still want to hear if we ship a vulnerable
-version.
+Out of scope here: issues in third-party dependencies that are already publicly known,
+though we still want to hear if we ship a vulnerable version.
 
 ## Safe harbor
 

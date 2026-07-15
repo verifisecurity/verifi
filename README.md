@@ -2,14 +2,12 @@
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 
-The open-source command-line interface for the [Verifi](https://verifisecurity.com)
-supply-chain security platform.
+The open-source command-line tool for finding and fixing risky dependencies, from
+[Verifi](https://verifisecurity.com).
 
-`verifi` is a thin, cross-platform client. It carries no detection logic of its own —
-it wraps the Verifi backend (detection → triage → remediation) over that backend's
-published API, so the CLI stays small and auditable while the analysis runs server-side.
-Use it to scan dependencies, review findings, and drive remediation from your terminal
-or CI.
+`verifi` is a small, cross-platform CLI. Point it at a project and it inspects your
+dependencies for known vulnerabilities, end-of-life packages, and malicious releases,
+then helps you fix what has a fix. It runs where you already work: your terminal and CI.
 
 > **Status: pre-release.** The command surface and runtime are still being finalized
 > (single-binary, Go/Rust candidate). Interfaces may change before the first tagged
@@ -26,20 +24,9 @@ _Coming with the first release._ Distribution will be a single self-contained bi
 ```
 verifi scan <path>        # scan a project's dependencies
 verifi status             # show findings for the current project
-verifi login              # authenticate against a Verifi backend
 ```
 
 Full command reference lands with the first release.
-
-## How it fits together
-
-The CLI talks only to the Verifi backend API — it never reaches into internal services
-directly. You can run it against Verifi's hosted backend or a self-hosted enterprise
-install.
-
-```
-  you ──▶ verifi CLI ──▶ Verifi backend API ──▶ detection · triage · remediation
-```
 
 ## Contributing
 

@@ -8,9 +8,8 @@ changes accepted.
 - **Be respectful.** Assume good faith and keep discussion technical.
 - **Security issues do not go here.** Never file a vulnerability as a public issue —
   follow [SECURITY.md](SECURITY.md) instead.
-- **Keep it lean.** This CLI is intentionally thin: it wraps the Verifi backend API and
-  carries no detection logic of its own. Proposals that push analysis logic into the
-  client are unlikely to be accepted.
+- **Keep it lean.** The CLI is intentionally small and focused. Prefer reusing mature,
+  well-maintained libraries over hand-rolling, and keep new dependencies minimal.
 
 ## Workflow
 
