@@ -1,3 +1,3 @@
-module github.com/verifi-security-platform/verifi-cli
+module github.com/verifisecurity/verifi
 
 go 1.26

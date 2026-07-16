@@ -8,7 +8,7 @@ believe you have found a vulnerability in the Verifi CLI, please report it respo
 **Do not open a public GitHub issue for security problems.**
 
 Preferred channel: use GitHub's private
-[**Report a vulnerability**](https://github.com/verifi-security-platform/verifi-cli/security/advisories/new)
+[**Report a vulnerability**](https://github.com/verifisecurity/verifi/security/advisories/new)
 button (Security → Advisories) so disclosure stays private until a fix ships.
 
 Alternatively, email **security@verifisecurity.com**. If you want to encrypt the report,

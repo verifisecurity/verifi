@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/verifi-security-platform/verifi-cli/internal/splash"
+	"github.com/verifisecurity/verifi/internal/splash"
 )
 
 // Set at build time via -ldflags (see .goreleaser.yaml).
@@ -39,7 +39,7 @@ func main() {
 
 	case "scan", "status", "fix":
 		fmt.Printf("`verifi %s` is coming in a future release. This is a pre-release build.\n", cmd)
-		fmt.Println("Follow along: https://github.com/verifi-security-platform/verifi-cli")
+		fmt.Println("Follow along: https://github.com/verifisecurity/verifi")
 
 	case "help", "-h", "--help":
 		usage()

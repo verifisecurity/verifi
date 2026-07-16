@@ -37,8 +37,8 @@ checksum:
 
 release:
   github:
-    owner: verifi-security-platform
-    name: verifi-cli
+    owner: verifisecurity
+    name: verifi
   draft: false
   prerelease: auto
 

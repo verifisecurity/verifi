@@ -1,7 +1,7 @@
 #!/bin/sh
 # Verifi CLI installer.
 #
-#   curl -fsSL https://raw.githubusercontent.com/verifi-security-platform/verifi-cli/main/install.sh | sh
+#   curl -fsSL https://raw.githubusercontent.com/verifisecurity/verifi/main/install.sh | sh
 #
 # Downloads the right prebuilt `verifi` binary for your OS/arch from GitHub
 # Releases, verifies its SHA-256 against the published checksums, and installs
@@ -13,7 +13,7 @@
 #   VERIFI_INSTALL_DIR   where to install (default: /usr/local/bin or ~/.local/bin)
 set -eu
 
-REPO="verifi-security-platform/verifi-cli"
+REPO="verifisecurity/verifi"
 VERSION="${VERIFI_VERSION:-latest}"
 
 say()  { printf '  %s\n' "$1"; }

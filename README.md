@@ -11,7 +11,7 @@ then helps you fix what has a fix. It runs where you already work: your terminal
 
 > **Status: pre-release.** The command surface and runtime are still being finalized
 > (single-binary, Go/Rust candidate). Interfaces may change before the first tagged
-> release. Watch [Releases](https://github.com/verifi-security-platform/verifi-cli/releases)
+> release. Watch [Releases](https://github.com/verifisecurity/verifi/releases)
 > for the first stable cut.
 
 ## Install

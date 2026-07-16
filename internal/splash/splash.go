@@ -187,7 +187,7 @@ func renderFrame(boxes []box, blockAlpha, wordAlpha float64) string {
 			grid[py][px] = cell{'█', mix(bg, inkWord, wordAlpha), bg}
 		}
 		drawText(grid, oy+7, center("coming soon · beta", canvasW), mix(bgAt(oy+7), inkTeal, wordAlpha))
-		drawText(grid, oy+9, center("github.com/verifi-security-platform/verifi-cli", canvasW), mix(bgAt(oy+9), inkMuted, wordAlpha*0.9))
+		drawText(grid, oy+9, center("github.com/verifisecurity/verifi", canvasW), mix(bgAt(oy+9), inkMuted, wordAlpha*0.9))
 	}
 
 	// Serialise with truecolor escapes.
