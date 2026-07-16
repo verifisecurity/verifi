@@ -1,6 +1,7 @@
-// Command verifi is the Verifi CLI: an open-source tool to find and fix risky
-// dependencies. This is a pre-release build — most commands are placeholders
-// while the tool is being built in the open. Running it shows a welcome splash.
+// Command verifi is the Verifi CLI: the open-source fix layer for the software
+// supply chain. It takes what is flagged, decides what matters by policy, and
+// drives the fix. This is a pre-release build, so most commands are placeholders
+// while the tool is built in the open. Running it shows a welcome splash.
 package main
 
 import (
@@ -61,15 +62,15 @@ func hasFlag(args []string, flag string) bool {
 }
 
 func usage() {
-	fmt.Print(`verifi — find and fix risky dependencies (pre-release)
+	fmt.Print(`verifi: the fix layer for your software supply chain (pre-release)
 
 Usage:
   verifi [command]
 
 Commands:
   welcome        Show the welcome splash (default)
-  scan <path>    Scan a project's dependencies (coming soon)
-  status         Show findings for the current project (coming soon)
+  fix <path>     Decide what matters, open fixes, gate the rest (coming soon)
+  status         Show what needs fixing in this project (coming soon)
   version        Print the version
   help           Show this help
 

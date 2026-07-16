@@ -2,28 +2,39 @@
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 
-The open-source command-line tool for finding and fixing risky dependencies, from
+The open-source **fix layer** for your software supply chain, from
 [Verifi](https://verifisecurity.com).
 
-`verifi` is a small, cross-platform CLI. Point it at a project and it inspects your
-dependencies for known vulnerabilities, end-of-life packages, and malicious releases,
-then helps you fix what has a fix. It runs where you already work: your terminal and CI.
+Findings come from anywhere: your scanners, public feeds, the registry, runtime. `verifi`
+takes what is flagged, decides what actually matters by policy, and drives the fix end to
+end: open the pull request, gate the build, block the install. It runs where you already
+work, in your terminal and CI. It is not another scanner. Its job starts where detection
+stops.
 
-> **Status: pre-release.** The command surface and runtime are still being finalized
-> (single-binary, Go/Rust candidate). Interfaces may change before the first tagged
-> release. Watch [Releases](https://github.com/verifisecurity/verifi/releases)
-> for the first stable cut.
+> **Status: pre-release, built in the open.** The command surface is still being shaped and
+> interfaces may change before the first tagged release. Watch
+> [Releases](https://github.com/verifisecurity/verifi/releases) for the first stable cut.
 
 ## Install
 
-_Coming with the first release._ Distribution will be a single self-contained binary
-(no runtime dependencies) plus package-manager taps.
+_Coming with the first release._ Distribution will be a single self-contained binary with
+no runtime dependencies.
+
+## What it will do
+
+- **Decide, don't just flag.** Resolve the full dependency tree, direct and transitive,
+  cross-check known CVEs, end-of-life status, and known-malicious releases (from the public
+  advisory databases or your own tools), and decide what matters by policy.
+- **Fix it in your repo.** For anything with a known fix, bump or replace the package and
+  open the pull request. The one step that actually moves the number.
+- **Gate the rest.** No fix path yet? Exit non-zero on a policy violation, so nothing that
+  breaks policy ships. One policy, two modes: fix what it can, gate the rest.
 
 ## Usage
 
 ```
-verifi scan <path>        # scan a project's dependencies
-verifi status             # show findings for the current project
+verifi fix <path>     # decide what matters, open fixes, gate the rest
+verifi status         # show what needs fixing in this project
 ```
 
 Full command reference lands with the first release.

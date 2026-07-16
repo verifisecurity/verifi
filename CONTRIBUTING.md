@@ -6,8 +6,8 @@ changes accepted.
 ## Ground rules
 
 - **Be respectful.** Assume good faith and keep discussion technical.
-- **Security issues do not go here.** Never file a vulnerability as a public issue —
-  follow [SECURITY.md](SECURITY.md) instead.
+- **Security issues do not go here.** Never file a vulnerability as a public issue.
+  Follow [SECURITY.md](SECURITY.md) instead.
 - **Keep it lean.** The CLI is intentionally small and focused. Prefer reusing mature,
   well-maintained libraries over hand-rolling, and keep new dependencies minimal.
 

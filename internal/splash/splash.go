@@ -298,6 +298,6 @@ func isTTY() bool {
 	return err == nil && fi.Mode()&os.ModeCharDevice != 0
 }
 
-func hideCursor()          { fmt.Print("\033[?25l") }
-func showCursor()          { fmt.Print("\033[?25h") }
+func hideCursor()           { fmt.Print("\033[?25l") }
+func showCursor()           { fmt.Print("\033[?25h") }
 func cursorUp(n int) string { return fmt.Sprintf("\033[%dA", n) }
