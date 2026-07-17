@@ -2,14 +2,16 @@
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 
-The open-source **fix layer** for your software supply chain, from
-[Verifi](https://verifisecurity.com).
+The command-line surface for [Verifi](https://verifisecurity.com), the open-source **fix
+layer** for your software supply chain.
 
 Findings come from anywhere: your scanners, public feeds, the registry, runtime. `verifi`
-takes what is flagged, decides what actually matters by policy, and drives the fix end to
-end: open the pull request, gate the build, block the install. It runs where you already
-work, in your terminal and CI. It is not another scanner. Its job starts where detection
-stops.
+takes what is flagged, decides what matters by policy, and drives the fix in your project:
+it opens the pull request and gates the build, right where you already work, in your
+terminal and CI. It is not another scanner. Its job starts where detection stops.
+
+Estate-wide response, blocking installs at the registry and coordinating fixes across
+repositories, is the job of the wider Verifi platform the CLI plugs into.
 
 > **Status: pre-release, built in the open.** The command surface is still being shaped and
 > interfaces may change before the first tagged release. Watch
@@ -29,6 +31,8 @@ no runtime dependencies.
   open the pull request. The one step that actually moves the number.
 - **Gate the rest.** No fix path yet? Exit non-zero on a policy violation, so nothing that
   breaks policy ships. One policy, two modes: fix what it can, gate the rest.
+- **Hand off the rest.** Applied fixes become pull requests through Verifi Connectors.
+  Registry-level blocking and cross-repo response belong to the Verifi platform, not the CLI.
 
 ## Usage
 
