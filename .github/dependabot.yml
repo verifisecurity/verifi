@@ -1,0 +1,17 @@
+# Keep our own supply chain current: a security tool should practise what it sells.
+# Dependabot opens PRs for outdated GitHub Actions and Go modules.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: ci
+
+  - package-ecosystem: gomod
+    directory: "/"
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: deps
