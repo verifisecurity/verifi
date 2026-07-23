@@ -4,6 +4,7 @@
 
 # Go
 /verifi
+/bin/
 *.test
 *.out
 /dist/

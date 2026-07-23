@@ -2,16 +2,20 @@
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 
-The command-line surface for [Verifi](https://verifisecurity.com), the open-source **fix
-layer** for your software supply chain.
+Fix vulnerable dependencies without breaking your app.
 
-Findings come from anywhere: your scanners, public feeds, the registry, runtime. `verifi`
-takes what is flagged, decides what matters by policy, and drives the fix in your project:
-it opens the pull request and gates the build, right where you already work, in your
-terminal and CI. It is not another scanner. Its job starts where detection stops.
+Every scanner hands you a list of vulnerable dependencies. None of them tell you whether
+fixing one will break your app. So the list sits there, or someone upgrades and loses an
+afternoon to a broken build.
+
+`verifi` looks at how your project actually uses each package and tells you which fixes are
+safe, which ones need a second look, and why. You get a short, trustworthy list of changes
+instead of a backlog you are afraid to touch. It is not another scanner. Its job starts
+where detection stops.
 
 Estate-wide response, blocking installs at the registry and coordinating fixes across
-repositories, is the job of the wider Verifi platform the CLI plugs into.
+repositories, is the job of the wider [Verifi](https://verifisecurity.com) platform the CLI
+plugs into.
 
 > **Status: pre-release, built in the open.** The command surface is still being shaped and
 > interfaces may change before the first tagged release. Watch
@@ -22,23 +26,20 @@ repositories, is the job of the wider Verifi platform the CLI plugs into.
 _Coming with the first release._ Distribution will be a single self-contained binary with
 no runtime dependencies.
 
-## What it will do
+## What you get
 
-- **Decide, don't just flag.** Resolve the full dependency tree, direct and transitive,
-  cross-check known CVEs, end-of-life status, and known-malicious releases (from the public
-  advisory databases or your own tools), and decide what matters by policy.
-- **Fix it in your repo.** For anything with a known fix, bump or replace the package and
-  open the pull request. The one step that actually moves the number.
-- **Gate the rest.** No fix path yet? Exit non-zero on a policy violation, so nothing that
-  breaks policy ships. One policy, two modes: fix what it can, gate the rest.
-- **Hand off the rest.** Applied fixes become pull requests through Verifi Connectors.
-  Registry-level blocking and cross-repo response belong to the Verifi platform, not the CLI.
+- **Focus on what matters.** Skip the vulnerabilities that never reach your code, and spend
+  your time on the ones that do.
+- **No surprise broken builds.** See what a fix will change in your project before you make
+  it, with the reason it is safe or the catch to watch for.
+- **Ship the fix with confidence.** Move faster on security, because you know what a change
+  will do before you commit to it.
 
 ## Usage
 
 ```
-verifi fix <path>     # decide what matters, open fixes, gate the rest
-verifi status         # show what needs fixing in this project
+verifi status <path>   # what needs fixing, and which fixes are safe to ship
+verifi fix <path>      # apply a safe fix in your project
 ```
 
 Full command reference lands with the first release.

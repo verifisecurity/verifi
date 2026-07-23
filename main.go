@@ -38,7 +38,19 @@ func main() {
 	case "version", "-v", "--version":
 		fmt.Printf("verifi %s (%s), built %s\n", version, commit, date)
 
-	case "scan", "status", "fix":
+	case "inspect":
+		if err := runInspect(args[1:]); err != nil {
+			fmt.Fprintln(os.Stderr, "verifi:", err)
+			os.Exit(1)
+		}
+
+	case "status":
+		if err := runStatus(args[1:]); err != nil {
+			fmt.Fprintln(os.Stderr, "verifi:", err)
+			os.Exit(1)
+		}
+
+	case "scan", "fix":
 		fmt.Printf("`verifi %s` is coming in a future release. This is a pre-release build.\n", cmd)
 		fmt.Println("Follow along: https://github.com/verifisecurity/verifi")
 
@@ -69,8 +81,9 @@ Usage:
 
 Commands:
   welcome        Show the welcome splash (default)
+  inspect <path> Resolve the project's dependencies (--json, --sbom)
+  status <path>  Show what is vulnerable, matched against OSV (--json, --db <dir>)
   fix <path>     Decide what matters, open fixes, gate the rest (coming soon)
-  status         Show what needs fixing in this project (coming soon)
   version        Print the version
   help           Show this help
 

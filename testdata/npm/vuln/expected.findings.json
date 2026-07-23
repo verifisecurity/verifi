@@ -1,0 +1,46 @@
+[
+  {
+    "purl": "pkg:npm/lodash@4.17.11",
+    "name": "lodash",
+    "version": "4.17.11",
+    "advisory": "GHSA-35jh-r3h4-6jhm",
+    "aliases": [
+      "CVE-2021-23337"
+    ],
+    "severity": "HIGH",
+    "summary": "Command injection in lodash",
+    "fixed_versions": [
+      "4.17.21"
+    ],
+    "source": "OSV",
+    "evidence": [
+      {
+        "source": "OSV",
+        "ref": "GHSA-35jh-r3h4-6jhm",
+        "detail": "lodash@4.17.11 is within an affected range"
+      }
+    ]
+  },
+  {
+    "purl": "pkg:npm/minimist@1.2.0",
+    "name": "minimist",
+    "version": "1.2.0",
+    "advisory": "GHSA-xvch-5gv4-984h",
+    "aliases": [
+      "CVE-2021-44906"
+    ],
+    "severity": "MEDIUM",
+    "summary": "Prototype pollution in minimist",
+    "fixed_versions": [
+      "1.2.6"
+    ],
+    "source": "OSV",
+    "evidence": [
+      {
+        "source": "OSV",
+        "ref": "GHSA-xvch-5gv4-984h",
+        "detail": "minimist@1.2.0 is within an affected range"
+      }
+    ]
+  }
+]

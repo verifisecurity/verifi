@@ -1,0 +1,14 @@
+{
+  "id": "GHSA-decoy-later-range",
+  "aliases": ["CVE-9999-00000"],
+  "summary": "Introduced after the installed lodash version, must not match",
+  "affected": [
+    {
+      "package": {"ecosystem": "npm", "name": "lodash"},
+      "ranges": [
+        {"type": "SEMVER", "events": [{"introduced": "4.17.20"}, {"fixed": "4.17.21"}]}
+      ],
+      "database_specific": {"severity": "LOW"}
+    }
+  ]
+}

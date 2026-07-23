@@ -1,0 +1,30 @@
+{
+  "ecosystem": "npm",
+  "root": {
+    "name": "sample-app",
+    "version": "1.0.0"
+  },
+  "packages": [
+    {
+      "purl": "pkg:npm/is-number@6.0.0",
+      "name": "is-number",
+      "version": "6.0.0",
+      "direct": false,
+      "scope": "dev"
+    },
+    {
+      "purl": "pkg:npm/is-odd@3.0.1",
+      "name": "is-odd",
+      "version": "3.0.1",
+      "direct": true,
+      "scope": "dev"
+    },
+    {
+      "purl": "pkg:npm/left-pad@1.3.0",
+      "name": "left-pad",
+      "version": "1.3.0",
+      "direct": true,
+      "scope": "prod"
+    }
+  ]
+}

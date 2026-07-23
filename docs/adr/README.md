@@ -16,6 +16,8 @@ easy and what it costs). Copy `template.md` to start a new one.
 | [0001](0001-language-and-dependency-posture.md) | Language and dependency posture | Accepted |
 | [0002](0002-findings-are-an-input.md) | Findings are an input, not a capability | Accepted |
 | [0003](0003-testing-and-definition-of-done.md) | Testing strategy and Definition of Done | Accepted |
+| [0004](0004-core-is-read-only-reasoning.md) | The core is read-only fix reasoning | Accepted |
+| [0005](0005-confidence-ladder-and-one-fix-command.md) | Confidence ladder, one fix command, patches not forks | Accepted |
 
 Write a new ADR when you make a call on: CLI verb/UX structure, how a fix is represented and
 applied, how the CLI hands off to the Orchestrator/Connectors, adding a third-party
