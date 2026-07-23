@@ -1,0 +1,58 @@
+#!/bin/sh
+# Verifi pre-commit gate. Install with: make hooks
+# Runs on every commit: guards the release branch, checks formatting, blocks
+# em dashes in prose and code, and runs vet plus the tests. Fast checks first.
+set -u
+
+fail() { echo "pre-commit: $1" >&2; exit 1; }
+
+# 1. main is the release branch: commit on dev, open an MR to ship.
+branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "")
+if [ "$branch" = "main" ]; then
+	fail "main is the release branch. Commit on dev and open an MR."
+fi
+
+staged=$(git diff --cached --name-only --diff-filter=ACM)
+[ -z "$staged" ] && exit 0
+
+# 2. gofmt on staged Go files (check only, never writes).
+gofiles=$(printf '%s\n' "$staged" | grep '\.go$' || true)
+if [ -n "$gofiles" ]; then
+	unformatted=$(printf '%s\n' "$gofiles" | xargs gofmt -l 2>/dev/null || true)
+	if [ -n "$unformatted" ]; then
+		echo "pre-commit: gofmt needed on:" >&2
+		printf '  %s\n' "$unformatted" >&2
+		fail "run: gofmt -w ."
+	fi
+fi
+
+# 3. no em dashes in staged prose or code (U+2014, given as UTF-8 octal so this
+#    file does not trip its own check). Use commas or periods.
+emdash=$(printf '\342\200\224')
+offenders=$(printf '%s\n' "$staged" | grep -E '\.(go|md|txt|sh|ya?ml)$' | while IFS= read -r f; do
+	[ -f "$f" ] || continue
+	if LC_ALL=C grep -lF "$emdash" "$f" >/dev/null 2>&1; then
+		printf '%s\n' "$f"
+	fi
+done)
+if [ -n "$offenders" ]; then
+	echo "pre-commit: em dashes found (use commas or periods):" >&2
+	printf '  %s\n' "$offenders" >&2
+	exit 1
+fi
+
+# 4. vet and tests. Skip if no Go files changed, to keep doc-only commits fast.
+if printf '%s\n' "$staged" | grep -q '\.go$'; then
+	if ! go vet ./... >/tmp/verifi-precommit.log 2>&1; then
+		echo "pre-commit: go vet failed:" >&2
+		tail -n 20 /tmp/verifi-precommit.log >&2
+		exit 1
+	fi
+	if ! go test ./... >/tmp/verifi-precommit.log 2>&1; then
+		echo "pre-commit: tests failed:" >&2
+		tail -n 20 /tmp/verifi-precommit.log >&2
+		exit 1
+	fi
+fi
+
+exit 0

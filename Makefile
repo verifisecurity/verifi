@@ -4,9 +4,13 @@
 BINARY := verifi
 BIN    := bin/$(BINARY)
 
-.PHONY: check fmt vet test build run clean tidy lint
+.PHONY: check fmt vet test build run clean tidy lint hooks
 
 check: fmt vet test ## fmt, vet, and race-enabled unit tests (run before every commit)
+
+hooks: ## install the git pre-commit hook (.githooks)
+	git config core.hooksPath .githooks
+	@echo "hooks installed: pre-commit guards main, checks gofmt, blocks em dashes, runs vet and tests"
 
 fmt: ## format and report anything reformatted
 	gofmt -l -w .
