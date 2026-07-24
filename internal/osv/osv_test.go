@@ -59,6 +59,40 @@ func TestMatch_Golden(t *testing.T) {
 	checkGolden(t, filepath.Join("..", "..", "testdata", "npm", "vuln", "expected.findings.json"), got)
 }
 
+func TestSeverity_Precedence(t *testing.T) {
+	top := Advisory{DatabaseSpecific: map[string]any{"severity": "high"}}
+	if got := severity(top); got != "HIGH" {
+		t.Errorf("top-level severity = %q, want HIGH", got)
+	}
+	perAff := Advisory{Affected: []Affected{{DatabaseSpecific: map[string]any{"severity": "moderate"}}}}
+	if got := severity(perAff); got != "MODERATE" {
+		t.Errorf("per-affected severity = %q, want MODERATE", got)
+	}
+	if got := severity(Advisory{}); got != "UNKNOWN" {
+		t.Errorf("missing severity = %q, want UNKNOWN", got)
+	}
+}
+
+func TestMatch_SkipsWithdrawn(t *testing.T) {
+	db := &DB{byKey: map[string][]Advisory{
+		key("npm", "left-pad"): {{
+			ID:        "GHSA-withdrawn",
+			Withdrawn: "2021-01-01T00:00:00Z",
+			Affected: []Affected{{
+				Package: Package{Ecosystem: "npm", Name: "left-pad"},
+				Ranges:  []Range{{Type: "SEMVER", Events: []Event{{Introduced: "0"}}}},
+			}},
+		}},
+	}}
+	inv := &inventory.Inventory{
+		Ecosystem: "npm",
+		Packages:  []inventory.Package{{Name: "left-pad", Version: "1.3.0", Purl: "pkg:npm/left-pad@1.3.0"}},
+	}
+	if got := db.Match(inv); len(got) != 0 {
+		t.Errorf("withdrawn advisory should be skipped, got %d findings", len(got))
+	}
+}
+
 func checkGolden(t *testing.T, path string, got []byte) {
 	t.Helper()
 	if *update {

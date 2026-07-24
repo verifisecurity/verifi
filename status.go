@@ -43,9 +43,6 @@ func runStatus(args []string) error {
 	if path == "" {
 		path = "."
 	}
-	if dbDir == "" {
-		dbDir = defaultDBDir()
-	}
 
 	lockPath := filepath.Join(path, "package-lock.json")
 	data, err := os.ReadFile(lockPath)
@@ -56,9 +53,13 @@ func runStatus(args []string) error {
 	if err != nil {
 		return err
 	}
+
+	if dbDir == "" {
+		dbDir = filepath.Join(cacheRoot(), inv.Ecosystem)
+	}
 	db, err := osv.Load(dbDir)
 	if err != nil {
-		return fmt.Errorf("%w\npoint at a local OSV database with --db <dir>", err)
+		return fmt.Errorf("no OSV database at %s\nrun `verifi update` to download it, or pass --db <dir>", dbDir)
 	}
 	findings := db.Match(inv)
 
@@ -72,13 +73,6 @@ func runStatus(args []string) error {
 	}
 	printStatus(inv, findings)
 	return nil
-}
-
-func defaultDBDir() string {
-	if h, err := os.UserHomeDir(); err == nil {
-		return filepath.Join(h, ".verifi", "osv")
-	}
-	return filepath.Join(".verifi", "osv")
 }
 
 func printStatus(inv *inventory.Inventory, findings []finding.Finding) {
