@@ -14,6 +14,7 @@ import (
 	"github.com/verifisecurity/verifi/internal/osv"
 	"github.com/verifisecurity/verifi/internal/reason"
 	"github.com/verifisecurity/verifi/internal/registry"
+	usagescan "github.com/verifisecurity/verifi/internal/usage"
 )
 
 // runStatus implements `verifi status <path> [--json] [--db <dir>] [--offline]`:
@@ -79,7 +80,9 @@ func runStatus(args []string) error {
 	if !offline {
 		exists = registryExists()
 	}
-	printStatus(inv, findings, exists)
+	// Best-effort: a scan error just means no usage signal, not a failure.
+	imported, _ := usagescan.Scan(path)
+	printStatus(inv, findings, exists, imported)
 	return nil
 }
 
@@ -105,7 +108,7 @@ func registryExists() candidate.Exists {
 	}
 }
 
-func printStatus(inv *inventory.Inventory, findings []finding.Finding, exists candidate.Exists) {
+func printStatus(inv *inventory.Inventory, findings []finding.Finding, exists candidate.Exists, imported map[string]bool) {
 	fmt.Printf("%s@%s (%s)\n", inv.Root.Name, inv.Root.Version, inv.Ecosystem)
 	if len(findings) == 0 {
 		fmt.Printf("%d packages scanned, none vulnerable.\n", len(inv.Packages))
@@ -137,6 +140,7 @@ func printStatus(inv *inventory.Inventory, findings []finding.Finding, exists ca
 	for _, name := range order {
 		fs := byPkg[name]
 		fmt.Printf("%-8s %s %s   %s\n", sevLabel(worstRank(fs)), name, fs[0].Version, directTag(inv, name))
+		fmt.Printf("   %s\n", usageLine(inv, name, imported))
 		for _, f := range fs {
 			id := f.Advisory
 			if len(f.Aliases) > 0 {
@@ -198,6 +202,18 @@ func sevLabel(rank int) string {
 	default:
 		return "UNKNOWN"
 	}
+}
+
+// usageLine states whether the project's own code imports this package. A
+// vulnerable direct dependency nothing imports is a strong remove candidate.
+func usageLine(inv *inventory.Inventory, name string, imported map[string]bool) string {
+	if directTag(inv, name) != "direct" {
+		return "used: indirectly, pulled in by another dependency"
+	}
+	if imported[name] {
+		return "used: imported by your code"
+	}
+	return "used: not imported by your code, removing it may clear this"
 }
 
 func directTag(inv *inventory.Inventory, name string) string {
