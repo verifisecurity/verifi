@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/verifisecurity/verifi/internal/command"
 	"github.com/verifisecurity/verifi/internal/splash"
 )
 
@@ -80,24 +81,29 @@ func hasFlag(args []string, flag string) bool {
 }
 
 func usage() {
-	fmt.Print(`verifi: the fix layer for your software supply chain (pre-release)
-
-Usage:
-  verifi [command]
-
-Commands:
-  welcome        Show the welcome splash (default)
-  inspect <path> Resolve the project's dependencies (--json, --sbom)
-  update         Download the OSV database into the local cache
-  status <path>  Show what is vulnerable and the fix (--json, --db <dir>, --offline)
-  fix <path>     Decide what matters, open fixes, gate the rest (coming soon)
-  version        Print the version
-  help           Show this help
-
-Flags (welcome):
-  --static       Print the banner without animation
-  --loop         Replay the animation until interrupted
-
-Learn more: https://verifisecurity.com
-`)
+	fmt.Println("verifi: the fix layer for your software supply chain (pre-release)")
+	fmt.Println()
+	fmt.Println("Usage:")
+	fmt.Println("  verifi [command]")
+	fmt.Println()
+	fmt.Println("Commands:")
+	w := 0
+	for _, c := range command.All {
+		if n := len(c.Invocation()); n > w {
+			w = n
+		}
+	}
+	for _, c := range command.All {
+		summary := c.Summary
+		if !c.Ready {
+			summary += " (coming soon)"
+		}
+		fmt.Printf("  %-*s  %s\n", w, c.Invocation(), summary)
+	}
+	fmt.Println()
+	fmt.Println("Flags (welcome):")
+	fmt.Println("  --static       Print the banner without animation")
+	fmt.Println("  --loop         Replay the animation until interrupted")
+	fmt.Println()
+	fmt.Println("Learn more: https://verifisecurity.com")
 }
