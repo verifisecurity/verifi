@@ -56,6 +56,16 @@ verifi help            Show this help
 Coming soon: fix.
 <!-- END COMMANDS -->
 
+## Supported ecosystems
+
+<!-- BEGIN ECOSYSTEMS -->
+```
+npm  package-lock.json
+```
+
+More ecosystems are on the way.
+<!-- END ECOSYSTEMS -->
+
 ## What you get
 
 - **Focus on what matters.** See which vulnerable packages your code actually imports, so you
