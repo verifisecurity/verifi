@@ -12,3 +12,10 @@
 # misc
 build/
 node_modules/
+
+# Internal planning docs live in a private dir, not in this public repo.
+# Kept local only: CLAUDE.md is Claude context, the rest are relocated.
+/CLAUDE.md
+/docs/ROADMAP.md
+/docs/pipeline.md
+/docs/adr/
