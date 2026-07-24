@@ -45,6 +45,20 @@ func TestCommandsBlock(t *testing.T) {
 	}
 }
 
+func TestEcosystemsBlock(t *testing.T) {
+	b := ecosystemsBlock()
+	if !strings.Contains(b, "npm") {
+		t.Errorf("ecosystems block should list npm:\n%s", b)
+	}
+	// Planned ecosystems are summarised, not listed by name.
+	if strings.Contains(b, "Maven") || strings.Contains(b, "PyPI") {
+		t.Errorf("planned ecosystems should not be named in the public block:\n%s", b)
+	}
+	if !strings.Contains(b, "on the way") {
+		t.Errorf("block should note more are coming:\n%s", b)
+	}
+}
+
 func TestInstallBlock(t *testing.T) {
 	if !strings.Contains(installBlock(), "curl -fsSL") {
 		t.Error("install block should contain the curl one-liner")

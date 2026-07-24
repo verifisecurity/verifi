@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/verifisecurity/verifi/internal/command"
+	"github.com/verifisecurity/verifi/internal/ecosystem"
 )
 
 // installURL is the canonical one-line installer.
@@ -27,6 +28,7 @@ func UpdateReadme(path string) error {
 		name, content string
 	}{
 		{"INSTALL", installBlock()},
+		{"ECOSYSTEMS", ecosystemsBlock()},
 		{"COMMANDS", commandsBlock()},
 	} {
 		out, err = replaceBlock(out, b.name, b.content)
@@ -55,6 +57,26 @@ func replaceBlock(doc, name, content string) (string, error) {
 
 func installBlock() string {
 	return "```sh\ncurl -fsSL " + installURL + " | sh\n```"
+}
+
+func ecosystemsBlock() string {
+	sup := ecosystem.Supported()
+	w := 0
+	for _, e := range sup {
+		if len(e.Name) > w {
+			w = len(e.Name)
+		}
+	}
+	var b strings.Builder
+	b.WriteString("```\n")
+	for _, e := range sup {
+		fmt.Fprintf(&b, "%-*s  %s\n", w, e.Name, e.Manifest)
+	}
+	b.WriteString("```")
+	if ecosystem.HasPlanned() {
+		b.WriteString("\n\nMore ecosystems are on the way.")
+	}
+	return b.String()
 }
 
 func commandsBlock() string {
