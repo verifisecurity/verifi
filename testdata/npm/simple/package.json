@@ -1,0 +1,11 @@
+{
+  "name": "sample-app",
+  "version": "1.0.0",
+  "description": "Fixture npm project for verifi inspect tests.",
+  "dependencies": {
+    "left-pad": "1.3.0"
+  },
+  "devDependencies": {
+    "is-odd": "3.0.1"
+  }
+}
