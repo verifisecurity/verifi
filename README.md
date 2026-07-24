@@ -46,7 +46,6 @@ that clears, and the limits of what has been checked.
 
 <!-- BEGIN COMMANDS -->
 ```
-verifi welcome         Show the welcome splash (default)
 verifi inspect <path>  Resolve the project's dependencies (--json, --sbom)
 verifi update          Download the OSV database into the local cache
 verifi status <path>   Show what is vulnerable and the fix (--json, --db, --offline)

@@ -12,9 +12,9 @@ type Command struct {
 	Ready   bool // false = placeholder, shown as coming soon, hidden from the README reference
 }
 
-// All is every command, in display order.
+// All is every command, in display order. Running verifi with no command shows
+// the splash, so "welcome" is not a command, it is the default.
 var All = []Command{
-	{"welcome", "", "Show the welcome splash (default)", true},
 	{"inspect", "<path>", "Resolve the project's dependencies (--json, --sbom)", true},
 	{"update", "", "Download the OSV database into the local cache", true},
 	{"status", "<path>", "Show what is vulnerable and the fix (--json, --db, --offline)", true},

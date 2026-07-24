@@ -27,7 +27,8 @@ func main() {
 	}
 
 	switch cmd {
-	case "", "welcome":
+	case "", "--static", "--loop":
+		// No command (optionally with a splash flag): say hello with the splash.
 		loop := hasFlag(args, "--loop")
 		static := hasFlag(args, "--static")
 		if static {
@@ -101,7 +102,7 @@ func usage() {
 		fmt.Printf("  %-*s  %s\n", w, c.Invocation(), summary)
 	}
 	fmt.Println()
-	fmt.Println("Flags (welcome):")
+	fmt.Println("Run verifi with no command to see the splash. Flags for it:")
 	fmt.Println("  --static       Print the banner without animation")
 	fmt.Println("  --loop         Replay the animation until interrupted")
 	fmt.Println()
