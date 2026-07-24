@@ -8,41 +8,63 @@ Every scanner hands you a list of vulnerable dependencies. None of them tell you
 fixing one will break your app. So the list sits there, or someone upgrades and loses an
 afternoon to a broken build.
 
-`verifi` looks at how your project actually uses each package and tells you which fixes are
-safe, which ones need a second look, and why. You get a short, trustworthy list of changes
-instead of a backlog you are afraid to touch. It is not another scanner. Its job starts
-where detection stops.
+`verifi` looks at how your project actually uses each package and, for each vulnerable one,
+tells you the version to move to, what it clears, and what it has not checked yet. You get a
+short, honest list of fixes instead of a backlog you are afraid to touch. It is not another
+scanner. Its job starts where detection stops.
 
 Estate-wide response, blocking installs at the registry and coordinating fixes across
 repositories, is the job of the wider [Verifi](https://verifisecurity.com) platform the CLI
 plugs into.
 
-> **Status: pre-release, built in the open.** The command surface is still being shaped and
-> interfaces may change before the first tagged release. Watch
-> [Releases](https://github.com/verifisecurity/verifi/releases) for the first stable cut.
+> **Status: v0.1.0, pre-1.0.** The read-only core is here: it scans a project and reasons
+> about each fix. The command surface may still change before 1.0. See
+> [Releases](https://github.com/verifisecurity/verifi/releases).
 
 ## Install
 
-_Coming with the first release._ Distribution will be a single self-contained binary with
-no runtime dependencies.
+<!-- BEGIN INSTALL -->
+```sh
+curl -fsSL https://raw.githubusercontent.com/verifisecurity/verifi/main/install.sh | sh
+```
+<!-- END INSTALL -->
 
-## What you get
-
-- **Focus on what matters.** Skip the vulnerabilities that never reach your code, and spend
-  your time on the ones that do.
-- **No surprise broken builds.** See what a fix will change in your project before you make
-  it, with the reason it is safe or the catch to watch for.
-- **Ship the fix with confidence.** Move faster on security, because you know what a change
-  will do before you commit to it.
+A single self-contained binary with no runtime dependencies. Prefer to do it yourself? Grab a
+build from [Releases](https://github.com/verifisecurity/verifi/releases).
 
 ## Usage
 
-```
-verifi status <path>   # what needs fixing, and which fixes are safe to ship
-verifi fix <path>      # apply a safe fix in your project
+Download the advisory database once, then scan a project:
+
+```sh
+verifi update
+verifi status path/to/project
 ```
 
-Full command reference lands with the first release.
+You get, per vulnerable package, whether your code imports it, the version to upgrade to, what
+that clears, and the limits of what has been checked.
+
+<!-- BEGIN COMMANDS -->
+```
+verifi welcome         Show the welcome splash (default)
+verifi inspect <path>  Resolve the project's dependencies (--json, --sbom)
+verifi update          Download the OSV database into the local cache
+verifi status <path>   Show what is vulnerable and the fix (--json, --db, --offline)
+verifi version         Print the version
+verifi help            Show this help
+```
+
+Coming soon: fix.
+<!-- END COMMANDS -->
+
+## What you get
+
+- **Focus on what matters.** See which vulnerable packages your code actually imports, so you
+  spend time on the ones that reach your app.
+- **A concrete fix, not just a warning.** For each one, the version to move to and what it
+  clears, checked against the registry so it is a version that really exists.
+- **Honest about the limits.** Every fix says what has been verified and what has not, so you
+  are never told more confidence than we have.
 
 ## Contributing
 

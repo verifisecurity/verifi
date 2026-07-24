@@ -25,6 +25,9 @@ jobs:
       - name: Format check
         run: test -z "$(gofmt -l .)" || (echo "gofmt needed:"; gofmt -l .; exit 1)
 
+      - name: Docs in sync
+        run: go run ./cmd/gendocs && git diff --exit-code -- README.md
+
       - name: Vet
         run: go vet ./...
 
