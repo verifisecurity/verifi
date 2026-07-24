@@ -44,6 +44,12 @@ func main() {
 			os.Exit(1)
 		}
 
+	case "update":
+		if err := runUpdate(args[1:]); err != nil {
+			fmt.Fprintln(os.Stderr, "verifi:", err)
+			os.Exit(1)
+		}
+
 	case "status":
 		if err := runStatus(args[1:]); err != nil {
 			fmt.Fprintln(os.Stderr, "verifi:", err)
@@ -82,7 +88,8 @@ Usage:
 Commands:
   welcome        Show the welcome splash (default)
   inspect <path> Resolve the project's dependencies (--json, --sbom)
-  status <path>  Show what is vulnerable, matched against OSV (--json, --db <dir>)
+  update         Download the OSV database into the local cache
+  status <path>  Show what is vulnerable and the fix (--json, --db <dir>, --offline)
   fix <path>     Decide what matters, open fixes, gate the rest (coming soon)
   version        Print the version
   help           Show this help

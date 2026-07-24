@@ -13,20 +13,25 @@ import (
 	"github.com/verifisecurity/verifi/internal/inventory"
 	"github.com/verifisecurity/verifi/internal/osv"
 	"github.com/verifisecurity/verifi/internal/reason"
+	"github.com/verifisecurity/verifi/internal/registry"
+	usagescan "github.com/verifisecurity/verifi/internal/usage"
 )
 
-// runStatus implements `verifi status <path> [--json] [--db <dir>]`: resolve the
-// project, match it against a local OSV database, and print what needs fixing.
-// Read-only. npm for now. Fix candidates and reasoning are later slices; this
-// reports what is vulnerable and the fixed versions the advisory records.
+// runStatus implements `verifi status <path> [--json] [--db <dir>] [--offline]`:
+// resolve the project, match it against a local OSV database, and print what
+// needs fixing with a reasoned fix per package. Read-only. npm for now. By
+// default it checks the registry so it only recommends versions that exist;
+// --offline skips that and trusts OSV's fixed versions.
 func runStatus(args []string) error {
 	path, dbDir := "", ""
-	asJSON := false
+	asJSON, offline := false, false
 	for i := 0; i < len(args); i++ {
 		a := args[i]
 		switch a {
 		case "--json":
 			asJSON = true
+		case "--offline":
+			offline = true
 		case "--db":
 			if i+1 >= len(args) {
 				return fmt.Errorf("--db needs a directory")
@@ -43,9 +48,6 @@ func runStatus(args []string) error {
 	if path == "" {
 		path = "."
 	}
-	if dbDir == "" {
-		dbDir = defaultDBDir()
-	}
 
 	lockPath := filepath.Join(path, "package-lock.json")
 	data, err := os.ReadFile(lockPath)
@@ -56,9 +58,13 @@ func runStatus(args []string) error {
 	if err != nil {
 		return err
 	}
+
+	if dbDir == "" {
+		dbDir = filepath.Join(cacheRoot(), inv.Ecosystem)
+	}
 	db, err := osv.Load(dbDir)
 	if err != nil {
-		return fmt.Errorf("%w\npoint at a local OSV database with --db <dir>", err)
+		return fmt.Errorf("no OSV database at %s\nrun `verifi update` to download it, or pass --db <dir>", dbDir)
 	}
 	findings := db.Match(inv)
 
@@ -70,18 +76,39 @@ func runStatus(args []string) error {
 		fmt.Println(string(out))
 		return nil
 	}
-	printStatus(inv, findings)
+	var exists candidate.Exists
+	if !offline {
+		exists = registryExists()
+	}
+	// Best-effort: a scan error just means no usage signal, not a failure.
+	imported, _ := usagescan.Scan(path)
+	printStatus(inv, findings, exists, imported)
 	return nil
 }
 
-func defaultDBDir() string {
-	if h, err := os.UserHomeDir(); err == nil {
-		return filepath.Join(h, ".verifi", "osv")
+// registryExists returns a predicate that reports whether a package version is
+// published, memoised per package. If the registry cannot be reached it returns
+// true rather than over-filtering, so a lookup failure degrades to OSV-only.
+func registryExists() candidate.Exists {
+	cache := map[string]map[string]bool{}
+	return func(name, version string) bool {
+		vs, ok := cache[name]
+		if !ok {
+			v, err := registry.NpmVersions(name)
+			if err != nil {
+				v = nil
+			}
+			cache[name] = v
+			vs = v
+		}
+		if vs == nil {
+			return true
+		}
+		return vs[version]
 	}
-	return filepath.Join(".verifi", "osv")
 }
 
-func printStatus(inv *inventory.Inventory, findings []finding.Finding) {
+func printStatus(inv *inventory.Inventory, findings []finding.Finding, exists candidate.Exists, imported map[string]bool) {
 	fmt.Printf("%s@%s (%s)\n", inv.Root.Name, inv.Root.Version, inv.Ecosystem)
 	if len(findings) == 0 {
 		fmt.Printf("%d packages scanned, none vulnerable.\n", len(inv.Packages))
@@ -105,7 +132,7 @@ func printStatus(inv *inventory.Inventory, findings []finding.Finding) {
 	})
 
 	recs := map[string]reason.Recommendation{}
-	for _, r := range reason.Explain(candidate.Compute(findings)) {
+	for _, r := range reason.Explain(candidate.Compute(findings, exists)) {
 		recs[r.Name] = r
 	}
 
@@ -113,6 +140,7 @@ func printStatus(inv *inventory.Inventory, findings []finding.Finding) {
 	for _, name := range order {
 		fs := byPkg[name]
 		fmt.Printf("%-8s %s %s   %s\n", sevLabel(worstRank(fs)), name, fs[0].Version, directTag(inv, name))
+		fmt.Printf("   %s\n", usageLine(inv, name, imported))
 		for _, f := range fs {
 			id := f.Advisory
 			if len(f.Aliases) > 0 {
@@ -174,6 +202,18 @@ func sevLabel(rank int) string {
 	default:
 		return "UNKNOWN"
 	}
+}
+
+// usageLine states whether the project's own code imports this package. A
+// vulnerable direct dependency nothing imports is a strong remove candidate.
+func usageLine(inv *inventory.Inventory, name string, imported map[string]bool) string {
+	if directTag(inv, name) != "direct" {
+		return "used: indirectly, pulled in by another dependency"
+	}
+	if imported[name] {
+		return "used: imported by your code"
+	}
+	return "used: not imported by your code, removing it may clear this"
 }
 
 func directTag(inv *inventory.Inventory, name string) string {

@@ -19,11 +19,13 @@ import (
 
 // Advisory is the subset of the OSV schema we read.
 type Advisory struct {
-	ID       string     `json:"id"`
-	Aliases  []string   `json:"aliases"`
-	Summary  string     `json:"summary"`
-	Severity []Severity `json:"severity"`
-	Affected []Affected `json:"affected"`
+	ID               string         `json:"id"`
+	Aliases          []string       `json:"aliases"`
+	Summary          string         `json:"summary"`
+	Withdrawn        string         `json:"withdrawn"` // set when the advisory was retracted
+	Severity         []Severity     `json:"severity"`
+	Affected         []Affected     `json:"affected"`
+	DatabaseSpecific map[string]any `json:"database_specific"`
 }
 
 type Severity struct {
@@ -94,8 +96,8 @@ func (db *DB) Match(inv *inventory.Inventory) []finding.Finding {
 	for _, p := range inv.Packages {
 		seen := map[string]bool{}
 		for _, adv := range db.byKey[key(inv.Ecosystem, p.Name)] {
-			if seen[adv.ID] {
-				continue
+			if adv.Withdrawn != "" || seen[adv.ID] {
+				continue // skip retracted advisories
 			}
 			fixed, ok := matchAdvisory(adv, inv.Ecosystem, p.Name, p.Version)
 			if !ok {
@@ -172,16 +174,26 @@ func inRange(version string, events []Event) bool {
 	return affected
 }
 
+// severity reads the advisory's severity word. GitHub advisories put it at the
+// top-level database_specific; some sources put it per-affected. Falls back to
+// UNKNOWN rather than guessing from a CVSS vector.
 func severity(adv Advisory) string {
+	if s := dbSeverity(adv.DatabaseSpecific); s != "" {
+		return s
+	}
 	for _, aff := range adv.Affected {
-		if s, ok := aff.DatabaseSpecific["severity"].(string); ok && s != "" {
-			return strings.ToUpper(s)
+		if s := dbSeverity(aff.DatabaseSpecific); s != "" {
+			return s
 		}
 	}
-	if len(adv.Severity) > 0 {
-		return adv.Severity[0].Score
-	}
 	return "UNKNOWN"
+}
+
+func dbSeverity(m map[string]any) string {
+	if s, ok := m["severity"].(string); ok && s != "" {
+		return strings.ToUpper(s)
+	}
+	return ""
 }
 
 func dedupeSorted(in []string) []string {
