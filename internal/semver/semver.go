@@ -87,6 +87,22 @@ func compareIdent(a, b string) int {
 	}
 }
 
+// Bump classifies the jump from version a to b as "major", "minor", "patch",
+// or "same", comparing only the numeric core (prerelease and build ignored).
+func Bump(a, b string) string {
+	ac, _ := split(a)
+	bc, _ := split(b)
+	switch {
+	case ac[0] != bc[0]:
+		return "major"
+	case ac[1] != bc[1]:
+		return "minor"
+	case ac[2] != bc[2]:
+		return "patch"
+	}
+	return "same"
+}
+
 func cmpInt(a, b int) int {
 	switch {
 	case a < b:
