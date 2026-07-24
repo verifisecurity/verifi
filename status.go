@@ -12,6 +12,7 @@ import (
 	"github.com/verifisecurity/verifi/internal/finding"
 	"github.com/verifisecurity/verifi/internal/inventory"
 	"github.com/verifisecurity/verifi/internal/osv"
+	"github.com/verifisecurity/verifi/internal/reason"
 )
 
 // runStatus implements `verifi status <path> [--json] [--db <dir>]`: resolve the
@@ -103,9 +104,9 @@ func printStatus(inv *inventory.Inventory, findings []finding.Finding) {
 		return order[i] < order[j]
 	})
 
-	cands := map[string]candidate.Candidate{}
-	for _, c := range candidate.Compute(findings) {
-		cands[c.Name] = c
+	recs := map[string]reason.Recommendation{}
+	for _, r := range reason.Explain(candidate.Compute(findings)) {
+		recs[r.Name] = r
 	}
 
 	fmt.Printf("%d packages scanned, %d vulnerable.\n\n", len(inv.Packages), len(order))
@@ -119,19 +120,20 @@ func printStatus(inv *inventory.Inventory, findings []finding.Finding) {
 			}
 			fmt.Printf("   %s   %s\n", id, f.Summary)
 		}
-		if c, ok := cands[name]; ok {
-			if c.Action == "upgrade" {
-				fmt.Printf("   Fix: upgrade to %s  (%s bump, clears %d)\n", c.Target, c.Distance, len(c.Clears))
-				if len(c.Residual) > 0 {
-					fmt.Printf("        still exposed: %s (no published fix)\n", strings.Join(c.Residual, ", "))
-				}
+		if r, ok := recs[name]; ok {
+			if r.Action == "upgrade" {
+				fmt.Printf("   Fix: upgrade to %s   confidence: %s\n", r.Target, r.Confidence)
 			} else {
-				fmt.Printf("   No published fix yet\n")
+				fmt.Printf("   No published fix   confidence: %s\n", r.Confidence)
+			}
+			fmt.Printf("        %s\n", r.Reason)
+			for _, l := range r.Limitations {
+				fmt.Printf("        - %s\n", l)
 			}
 		}
 		fmt.Println()
 	}
-	fmt.Println("Reasoning (why a fix is safe, and impact on your code) comes next.")
+	fmt.Println("Next: impact (does the fix touch code you use) and behavioural checks.")
 }
 
 func sevRank(s string) int {
