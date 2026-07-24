@@ -28,7 +28,7 @@ func TestNearestFix(t *testing.T) {
 		{"1.0.0", nil, ""},                             // no published fix
 	}
 	for _, c := range cases {
-		if got := nearestFix(c.current, c.fixes); got != c.want {
+		if got := nearestFix("pkg", c.current, c.fixes, nil); got != c.want {
 			t.Errorf("nearestFix(%s, %v) = %q, want %q", c.current, c.fixes, got, c.want)
 		}
 	}
@@ -41,13 +41,33 @@ func TestCompute_MultiAdvisory(t *testing.T) {
 		{Name: "pkg", Version: "1.0.0", Purl: "pkg:npm/pkg@1.0.0", Advisory: "A", FixedVersions: []string{"1.2.0"}},
 		{Name: "pkg", Version: "1.0.0", Purl: "pkg:npm/pkg@1.0.0", Advisory: "B", FixedVersions: []string{"1.5.0"}},
 	}
-	got := Compute(fs)
+	got := Compute(fs, nil)
 	if len(got) != 1 {
 		t.Fatalf("candidates = %d, want 1", len(got))
 	}
 	c := got[0]
 	if c.Target != "1.5.0" || c.Distance != "minor" || len(c.Clears) != 2 {
 		t.Errorf("got %+v, want target 1.5.0, minor, clears both", c)
+	}
+}
+
+func TestCompute_SkipsUnpublishedFix(t *testing.T) {
+	// One advisory's only fix is an unpublished version; it must fall to
+	// residual, not be recommended. The other clears to a real version.
+	fs := []finding.Finding{
+		{Name: "lodash", Version: "4.17.11", Purl: "pkg:npm/lodash@4.17.11", Advisory: "REAL", FixedVersions: []string{"4.17.21"}},
+		{Name: "lodash", Version: "4.17.11", Purl: "pkg:npm/lodash@4.17.11", Advisory: "PHANTOM", FixedVersions: []string{"4.18.0"}},
+	}
+	exists := func(name, version string) bool { return version == "4.17.21" } // 4.18.0 not published
+	c := Compute(fs, exists)[0]
+	if c.Target != "4.17.21" {
+		t.Errorf("target = %q, want 4.17.21 (not the phantom 4.18.0)", c.Target)
+	}
+	if len(c.Clears) != 1 || c.Clears[0] != "REAL" {
+		t.Errorf("clears = %v, want [REAL]", c.Clears)
+	}
+	if len(c.Residual) != 1 || c.Residual[0] != "PHANTOM" {
+		t.Errorf("residual = %v, want [PHANTOM]", c.Residual)
 	}
 }
 
@@ -67,7 +87,7 @@ func TestCompute_Golden(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}
-	got, err := json.MarshalIndent(Compute(db.Match(inv)), "", "  ")
+	got, err := json.MarshalIndent(Compute(db.Match(inv), nil), "", "  ")
 	if err != nil {
 		t.Fatal(err)
 	}

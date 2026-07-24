@@ -13,20 +13,24 @@ import (
 	"github.com/verifisecurity/verifi/internal/inventory"
 	"github.com/verifisecurity/verifi/internal/osv"
 	"github.com/verifisecurity/verifi/internal/reason"
+	"github.com/verifisecurity/verifi/internal/registry"
 )
 
-// runStatus implements `verifi status <path> [--json] [--db <dir>]`: resolve the
-// project, match it against a local OSV database, and print what needs fixing.
-// Read-only. npm for now. Fix candidates and reasoning are later slices; this
-// reports what is vulnerable and the fixed versions the advisory records.
+// runStatus implements `verifi status <path> [--json] [--db <dir>] [--offline]`:
+// resolve the project, match it against a local OSV database, and print what
+// needs fixing with a reasoned fix per package. Read-only. npm for now. By
+// default it checks the registry so it only recommends versions that exist;
+// --offline skips that and trusts OSV's fixed versions.
 func runStatus(args []string) error {
 	path, dbDir := "", ""
-	asJSON := false
+	asJSON, offline := false, false
 	for i := 0; i < len(args); i++ {
 		a := args[i]
 		switch a {
 		case "--json":
 			asJSON = true
+		case "--offline":
+			offline = true
 		case "--db":
 			if i+1 >= len(args) {
 				return fmt.Errorf("--db needs a directory")
@@ -71,11 +75,37 @@ func runStatus(args []string) error {
 		fmt.Println(string(out))
 		return nil
 	}
-	printStatus(inv, findings)
+	var exists candidate.Exists
+	if !offline {
+		exists = registryExists()
+	}
+	printStatus(inv, findings, exists)
 	return nil
 }
 
-func printStatus(inv *inventory.Inventory, findings []finding.Finding) {
+// registryExists returns a predicate that reports whether a package version is
+// published, memoised per package. If the registry cannot be reached it returns
+// true rather than over-filtering, so a lookup failure degrades to OSV-only.
+func registryExists() candidate.Exists {
+	cache := map[string]map[string]bool{}
+	return func(name, version string) bool {
+		vs, ok := cache[name]
+		if !ok {
+			v, err := registry.NpmVersions(name)
+			if err != nil {
+				v = nil
+			}
+			cache[name] = v
+			vs = v
+		}
+		if vs == nil {
+			return true
+		}
+		return vs[version]
+	}
+}
+
+func printStatus(inv *inventory.Inventory, findings []finding.Finding, exists candidate.Exists) {
 	fmt.Printf("%s@%s (%s)\n", inv.Root.Name, inv.Root.Version, inv.Ecosystem)
 	if len(findings) == 0 {
 		fmt.Printf("%d packages scanned, none vulnerable.\n", len(inv.Packages))
@@ -99,7 +129,7 @@ func printStatus(inv *inventory.Inventory, findings []finding.Finding) {
 	})
 
 	recs := map[string]reason.Recommendation{}
-	for _, r := range reason.Explain(candidate.Compute(findings)) {
+	for _, r := range reason.Explain(candidate.Compute(findings, exists)) {
 		recs[r.Name] = r
 	}
 

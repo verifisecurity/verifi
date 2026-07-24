@@ -59,7 +59,7 @@ func TestExplain_Golden(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}
-	got, err := json.MarshalIndent(Explain(candidate.Compute(db.Match(inv))), "", "  ")
+	got, err := json.MarshalIndent(Explain(candidate.Compute(db.Match(inv), nil)), "", "  ")
 	if err != nil {
 		t.Fatal(err)
 	}

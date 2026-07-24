@@ -24,9 +24,16 @@ type Candidate struct {
 	Distance string   `json:"distance,omitempty"` // major | minor | patch
 }
 
+// Exists reports whether a specific version of a package is published on its
+// registry. Compute only recommends versions for which this returns true. A nil
+// predicate means "do not filter" (offline: trust OSV's fixed versions).
+type Exists func(name, version string) bool
+
 // Compute produces one candidate per vulnerable package. Deterministic: sorted
-// by package name, advisory lists sorted.
-func Compute(findings []finding.Finding) []Candidate {
+// by package name, advisory lists sorted. A fixed version that does not exist
+// on the registry (per exists) is skipped, so an advisory whose only fix is
+// unpublished falls to residual instead of recommending a phantom version.
+func Compute(findings []finding.Finding, exists Exists) []Candidate {
 	byPkg := map[string][]finding.Finding{}
 	var order []string
 	for _, f := range findings {
@@ -44,7 +51,7 @@ func Compute(findings []finding.Finding) []Candidate {
 		var clears, residual []string
 		target := ""
 		for _, f := range fs {
-			fix := nearestFix(current, f.FixedVersions)
+			fix := nearestFix(name, current, f.FixedVersions, exists)
 			if fix == "" {
 				residual = append(residual, f.Advisory)
 				continue
@@ -72,12 +79,16 @@ func Compute(findings []finding.Finding) []Candidate {
 	return out
 }
 
-// nearestFix returns the smallest fixed version greater than current, or "" if
-// none of the fixes move forward (for example an advisory with no fix).
-func nearestFix(current string, fixes []string) string {
+// nearestFix returns the smallest fixed version greater than current that also
+// exists on the registry, or "" if none qualify (no fix, or the only fixes are
+// unpublished).
+func nearestFix(name, current string, fixes []string, exists Exists) string {
 	best := ""
 	for _, f := range fixes {
 		if semver.Compare(f, current) <= 0 {
+			continue
+		}
+		if exists != nil && !exists(name, f) {
 			continue
 		}
 		if best == "" || semver.Compare(f, best) < 0 {
