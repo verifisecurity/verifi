@@ -1,9 +1,10 @@
-# Basic quality gate: build, vet, and test on every push and PR.
+# Quality gate for the dev -> main pipeline: runs on every push to dev and main,
+# and on every PR into main (the gate that guards the release branch).
 name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, dev]
   pull_request:
     branches: [main]
 
@@ -21,6 +22,9 @@ jobs:
         with:
           go-version-file: go.mod
 
+      - name: Format check
+        run: test -z "$(gofmt -l .)" || (echo "gofmt needed:"; gofmt -l .; exit 1)
+
       - name: Vet
         run: go vet ./...
 
@@ -28,4 +32,4 @@ jobs:
         run: go build ./...
 
       - name: Test
-        run: go test ./...
+        run: go test -race ./...
