@@ -8,6 +8,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/verifisecurity/verifi/internal/candidate"
 	"github.com/verifisecurity/verifi/internal/finding"
 	"github.com/verifisecurity/verifi/internal/inventory"
 	"github.com/verifisecurity/verifi/internal/osv"
@@ -102,6 +103,11 @@ func printStatus(inv *inventory.Inventory, findings []finding.Finding) {
 		return order[i] < order[j]
 	})
 
+	cands := map[string]candidate.Candidate{}
+	for _, c := range candidate.Compute(findings) {
+		cands[c.Name] = c
+	}
+
 	fmt.Printf("%d packages scanned, %d vulnerable.\n\n", len(inv.Packages), len(order))
 	for _, name := range order {
 		fs := byPkg[name]
@@ -112,15 +118,20 @@ func printStatus(inv *inventory.Inventory, findings []finding.Finding) {
 				id = f.Aliases[0] + " (" + f.Advisory + ")"
 			}
 			fmt.Printf("   %s   %s\n", id, f.Summary)
-			if len(f.FixedVersions) > 0 {
-				fmt.Printf("      fixed in %s\n", strings.Join(f.FixedVersions, ", "))
+		}
+		if c, ok := cands[name]; ok {
+			if c.Action == "upgrade" {
+				fmt.Printf("   Fix: upgrade to %s  (%s bump, clears %d)\n", c.Target, c.Distance, len(c.Clears))
+				if len(c.Residual) > 0 {
+					fmt.Printf("        still exposed: %s (no published fix)\n", strings.Join(c.Residual, ", "))
+				}
 			} else {
-				fmt.Printf("      no fixed version published\n")
+				fmt.Printf("   No published fix yet\n")
 			}
 		}
 		fmt.Println()
 	}
-	fmt.Println("Fix candidates and reasoning come next. This build reports what is vulnerable.")
+	fmt.Println("Reasoning (why a fix is safe, and impact on your code) comes next.")
 }
 
 func sevRank(s string) int {
