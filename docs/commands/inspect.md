@@ -44,5 +44,4 @@ vuln-app@1.0.0 (npm)
 
 Each line is a resolved package with its version and two tags: whether it is a
 direct or transitive dependency, and whether it is a production or development
-dependency. `--json` emits the same inventory as structured data; `--sbom`
-emits a CycloneDX SBOM.
+dependency.
