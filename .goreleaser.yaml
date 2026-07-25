@@ -26,10 +26,15 @@ builds:
       - -X main.date={{ .Date }}
 
 archives:
-  # Version-independent names so install.sh can use the stable
-  # /releases/latest/download/<asset> redirect.
+  # Version-independent names so the installers can use the stable
+  # /releases/latest/download/<asset> redirect. Unix ships .tar.gz; Windows
+  # ships .zip so PowerShell's built-in Expand-Archive handles it with no
+  # extra tooling (see install.ps1).
   - id: verifi
     name_template: "verifi_{{ .Os }}_{{ .Arch }}"
+    format_overrides:
+      - goos: windows
+        format: zip
 
 checksum:
   name_template: checksums.txt
