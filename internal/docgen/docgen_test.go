@@ -3,13 +3,15 @@ package docgen
 import (
 	"strings"
 	"testing"
+
+	"github.com/verifisecurity/verifi/internal/command"
 )
 
 func TestReplaceBlock(t *testing.T) {
 	doc := "top\n<!-- BEGIN X -->\nold content\n<!-- END X -->\nbottom"
 	want := "top\n<!-- BEGIN X -->\nnew\n<!-- END X -->\nbottom"
 
-	got, err := replaceBlock(doc, "X", "new")
+	got, err := replaceBlock(doc, "X", "new", true)
 	if err != nil {
 		t.Fatalf("replaceBlock: %v", err)
 	}
@@ -18,30 +20,41 @@ func TestReplaceBlock(t *testing.T) {
 	}
 
 	// Idempotent: replacing again with the same content is a no-op.
-	again, err := replaceBlock(got, "X", "new")
+	again, err := replaceBlock(got, "X", "new", true)
 	if err != nil || again != want {
 		t.Errorf("not idempotent: got %q err %v", again, err)
 	}
 }
 
 func TestReplaceBlock_MissingMarker(t *testing.T) {
-	if _, err := replaceBlock("no markers here", "X", "y"); err == nil {
-		t.Error("expected an error when the marker block is absent")
+	// Required: a missing marker is an error.
+	if _, err := replaceBlock("no markers here", "X", "y", true); err != nil {
+		// expected
+	} else {
+		t.Error("expected an error when a required marker block is absent")
+	}
+	// Optional: a missing marker leaves the doc unchanged.
+	if got, err := replaceBlock("no markers", "X", "y", false); err != nil || got != "no markers" {
+		t.Errorf("optional missing marker should be a no-op, got %q err %v", got, err)
 	}
 }
 
 func TestCommandsBlock(t *testing.T) {
-	b := commandsBlock()
+	cmds := []command.Command{
+		{Name: "status", Args: "<path>", Summary: "scan", Ready: true},
+		{Name: "later", Args: "<path>", Summary: "soon", Ready: false},
+	}
+	b := commandsBlockFor(cmds)
 	// A ready command appears in the reference.
 	if !strings.Contains(b, "verifi status <path>") {
 		t.Errorf("commands block missing status:\n%s", b)
 	}
 	// A not-ready command is not in the reference, only in "Coming soon".
-	if strings.Contains(b, "verifi fix <path>  ") {
+	if strings.Contains(b, "verifi later") {
 		t.Errorf("placeholder command should not be in the reference:\n%s", b)
 	}
-	if !strings.Contains(b, "Coming soon: fix.") {
-		t.Errorf("commands block should list fix as coming soon:\n%s", b)
+	if !strings.Contains(b, "Coming soon: later.") {
+		t.Errorf("commands block should list the placeholder as coming soon:\n%s", b)
 	}
 }
 

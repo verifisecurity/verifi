@@ -23,6 +23,7 @@ type Recommendation struct {
 	Purl        string   `json:"purl"`
 	Name        string   `json:"name"`
 	Action      string   `json:"action"` // upgrade | none
+	Current     string   `json:"current,omitempty"`
 	Target      string   `json:"target,omitempty"`
 	Confidence  string   `json:"confidence"` // advisory | structural | behavioural
 	Reason      string   `json:"reason"`
@@ -38,22 +39,28 @@ func Explain(cands []candidate.Candidate) []Recommendation {
 			Purl:       c.Purl,
 			Name:       c.Name,
 			Action:     c.Action,
+			Current:    c.Current,
 			Target:     c.Target,
 			Confidence: "advisory",
 			Evidence:   evidence(c),
 		}
-		if c.Action != "upgrade" {
+		switch c.Action {
+		case "remove":
+			r.Reason = fmt.Sprintf("Your code does not import it; removing it clears %s at no compatibility risk.", join(c.Clears))
+			r.Limitations = []string{
+				"Usage is heuristic: a dynamic import or a config-referenced loader can hide a real use, so confirm it is unused.",
+			}
+		case "upgrade":
+			r.Reason = fmt.Sprintf("Clears %s (fixed in %s per OSV), a %s bump from %s.",
+				join(c.Clears), c.Target, c.Distance, c.Current)
+			r.Limitations = limitations(c)
+		default:
 			r.Reason = fmt.Sprintf("No published version clears %s.", join(c.Residual))
 			r.Limitations = []string{
 				"No safe version to upgrade to yet.",
 				"Consider removing or replacing the package if it is not essential.",
 			}
-			out = append(out, r)
-			continue
 		}
-		r.Reason = fmt.Sprintf("Clears %s (fixed in %s per OSV), a %s bump from %s.",
-			join(c.Clears), c.Target, c.Distance, c.Current)
-		r.Limitations = limitations(c)
 		out = append(out, r)
 	}
 	return out
