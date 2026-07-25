@@ -9,7 +9,7 @@ func TestReplaceBlock(t *testing.T) {
 	doc := "top\n<!-- BEGIN X -->\nold content\n<!-- END X -->\nbottom"
 	want := "top\n<!-- BEGIN X -->\nnew\n<!-- END X -->\nbottom"
 
-	got, err := replaceBlock(doc, "X", "new")
+	got, err := replaceBlock(doc, "X", "new", true)
 	if err != nil {
 		t.Fatalf("replaceBlock: %v", err)
 	}
@@ -18,15 +18,22 @@ func TestReplaceBlock(t *testing.T) {
 	}
 
 	// Idempotent: replacing again with the same content is a no-op.
-	again, err := replaceBlock(got, "X", "new")
+	again, err := replaceBlock(got, "X", "new", true)
 	if err != nil || again != want {
 		t.Errorf("not idempotent: got %q err %v", again, err)
 	}
 }
 
 func TestReplaceBlock_MissingMarker(t *testing.T) {
-	if _, err := replaceBlock("no markers here", "X", "y"); err == nil {
-		t.Error("expected an error when the marker block is absent")
+	// Required: a missing marker is an error.
+	if _, err := replaceBlock("no markers here", "X", "y", true); err != nil {
+		// expected
+	} else {
+		t.Error("expected an error when a required marker block is absent")
+	}
+	// Optional: a missing marker leaves the doc unchanged.
+	if got, err := replaceBlock("no markers", "X", "y", false); err != nil || got != "no markers" {
+		t.Errorf("optional missing marker should be a no-op, got %q err %v", got, err)
 	}
 }
 

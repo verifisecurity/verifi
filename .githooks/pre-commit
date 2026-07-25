@@ -55,17 +55,17 @@ if printf '%s\n' "$staged" | grep -q '\.go$'; then
 	fi
 fi
 
-# 5. Keep generated docs in sync. Regenerate when Go or the README changed, and
-#    stage the result so a commit can never ship stale docs.
-if printf '%s\n' "$staged" | grep -qE '\.go$|README\.md$'; then
+# 5. Keep generated docs in sync. Regenerate when Go, the README, or docs
+#    changed, and stage the result so a commit can never ship stale docs.
+if printf '%s\n' "$staged" | grep -qE '\.go$|README\.md$|^docs/'; then
 	if ! go run ./cmd/gendocs >/tmp/verifi-precommit.log 2>&1; then
 		echo "pre-commit: gendocs failed:" >&2
 		tail -n 20 /tmp/verifi-precommit.log >&2
 		exit 1
 	fi
-	if ! git diff --quiet -- README.md; then
-		git add README.md
-		echo "pre-commit: regenerated README and staged it"
+	if ! git diff --quiet -- README.md docs/; then
+		git add README.md docs/
+		echo "pre-commit: regenerated docs and staged them"
 	fi
 fi
 
