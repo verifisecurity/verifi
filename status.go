@@ -3,17 +3,12 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"os"
-	"path/filepath"
 	"sort"
 	"strings"
 
-	"github.com/verifisecurity/verifi/internal/candidate"
 	"github.com/verifisecurity/verifi/internal/finding"
 	"github.com/verifisecurity/verifi/internal/inventory"
-	"github.com/verifisecurity/verifi/internal/osv"
 	"github.com/verifisecurity/verifi/internal/reason"
-	"github.com/verifisecurity/verifi/internal/registry"
 	usagescan "github.com/verifisecurity/verifi/internal/usage"
 )
 
@@ -49,24 +44,10 @@ func runStatus(args []string) error {
 		path = "."
 	}
 
-	lockPath := filepath.Join(path, "package-lock.json")
-	data, err := os.ReadFile(lockPath)
-	if err != nil {
-		return fmt.Errorf("read %s: %w", lockPath, err)
-	}
-	inv, err := inventory.ParseNpmLock(data)
+	inv, findings, recs, err := analyze(path, dbDir, offline)
 	if err != nil {
 		return err
 	}
-
-	if dbDir == "" {
-		dbDir = filepath.Join(cacheRoot(), inv.Ecosystem)
-	}
-	db, err := osv.Load(dbDir)
-	if err != nil {
-		return fmt.Errorf("no OSV database at %s\nrun `verifi update` to download it, or pass --db <dir>", dbDir)
-	}
-	findings := db.Match(inv)
 
 	if asJSON {
 		out, err := json.MarshalIndent(findings, "", "  ")
@@ -76,39 +57,14 @@ func runStatus(args []string) error {
 		fmt.Println(string(out))
 		return nil
 	}
-	var exists candidate.Exists
-	if !offline {
-		exists = registryExists()
-	}
+
 	// Best-effort: a scan error just means no usage signal, not a failure.
 	imported, _ := usagescan.Scan(path)
-	printStatus(inv, findings, exists, imported)
+	printStatus(inv, findings, recs, imported)
 	return nil
 }
 
-// registryExists returns a predicate that reports whether a package version is
-// published, memoised per package. If the registry cannot be reached it returns
-// true rather than over-filtering, so a lookup failure degrades to OSV-only.
-func registryExists() candidate.Exists {
-	cache := map[string]map[string]bool{}
-	return func(name, version string) bool {
-		vs, ok := cache[name]
-		if !ok {
-			v, err := registry.NpmVersions(name)
-			if err != nil {
-				v = nil
-			}
-			cache[name] = v
-			vs = v
-		}
-		if vs == nil {
-			return true
-		}
-		return vs[version]
-	}
-}
-
-func printStatus(inv *inventory.Inventory, findings []finding.Finding, exists candidate.Exists, imported map[string]bool) {
+func printStatus(inv *inventory.Inventory, findings []finding.Finding, recs []reason.Recommendation, imported map[string]bool) {
 	fmt.Printf("%s@%s (%s)\n", inv.Root.Name, inv.Root.Version, inv.Ecosystem)
 	if len(findings) == 0 {
 		fmt.Printf("%d packages scanned, none vulnerable.\n", len(inv.Packages))
@@ -131,9 +87,9 @@ func printStatus(inv *inventory.Inventory, findings []finding.Finding, exists ca
 		return order[i] < order[j]
 	})
 
-	recs := map[string]reason.Recommendation{}
-	for _, r := range reason.Explain(candidate.Compute(findings, exists)) {
-		recs[r.Name] = r
+	recByName := map[string]reason.Recommendation{}
+	for _, r := range recs {
+		recByName[r.Name] = r
 	}
 
 	fmt.Printf("%d packages scanned, %d vulnerable.\n\n", len(inv.Packages), len(order))
@@ -148,7 +104,7 @@ func printStatus(inv *inventory.Inventory, findings []finding.Finding, exists ca
 			}
 			fmt.Printf("   %s   %s\n", id, f.Summary)
 		}
-		if r, ok := recs[name]; ok {
+		if r, ok := recByName[name]; ok {
 			if r.Action == "upgrade" {
 				fmt.Printf("   Fix: upgrade to %s   confidence: %s\n", r.Target, r.Confidence)
 			} else {

@@ -1,0 +1,69 @@
+---
+title: verifi fix
+description: Apply the recommended fix, or preview it.
+sidebar_position: 4
+---
+
+# verifi fix
+
+`verifi fix` applies the fix that [`verifi status`](status.md) recommends:
+upgrade a vulnerable package to a safe version. It **previews by default and
+writes nothing**; you opt in to the change with `--apply`, which runs the package
+manager for you.
+
+Applying is deliberately explicit. At today's [advisory
+confidence](../concepts/confidence.md), Verifi does not change your code
+silently; you ask for it, and then you run your tests.
+
+## Usage
+
+<!-- BEGIN SIGNATURE -->
+```
+verifi fix <path>
+```
+<!-- END SIGNATURE -->
+
+## Flags
+
+<!-- BEGIN FLAGS -->
+```
+--apply     Write the change via the package manager (default is preview)
+--db <dir>  Use a specific OSV database directory
+--offline   Skip the registry check for published versions
+```
+<!-- END FLAGS -->
+
+## Example
+
+A preview (the default), which writes nothing:
+
+<!-- BEGIN EXAMPLE -->
+```
+Planned fixes (2). Nothing is written without --apply.
+
+  upgrade lodash: 4.17.11 -> 4.17.21
+      Clears GHSA-35jh-r3h4-6jhm (fixed in 4.17.21 per OSV), a patch bump from 4.17.11.
+      $ npm install lodash@4.17.21
+
+  upgrade minimist: 1.2.0 -> 1.2.6
+      Clears GHSA-xvch-5gv4-984h (fixed in 1.2.6 per OSV), a patch bump from 1.2.0.
+      $ npm install minimist@1.2.6
+
+Apply with:  verifi fix <path> --apply
+```
+<!-- END EXAMPLE -->
+
+## Applying
+
+To make the changes, add `--apply`:
+
+```sh
+verifi fix path/to/project --apply
+```
+
+It runs the package manager (`npm install <pkg>@<version>`) for each fix, which
+updates both your manifest and lockfile. Then re-run `verifi status` to confirm,
+and run your tests.
+
+Remove (dropping a vulnerable dependency your code never imports) and opening the
+change as a pull request are on the way.

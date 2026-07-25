@@ -150,11 +150,13 @@ func ecosystemsBlock() string {
 	return b.String()
 }
 
-func commandsBlock() string {
+func commandsBlock() string { return commandsBlockFor(command.All) }
+
+func commandsBlockFor(cmds []command.Command) string {
 	type row struct{ left, summary string }
 	var rows []row
 	var soon []string
-	for _, c := range command.All {
+	for _, c := range cmds {
 		if !c.Ready {
 			soon = append(soon, c.Name)
 			continue

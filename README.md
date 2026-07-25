@@ -49,11 +49,10 @@ that clears, and the limits of what has been checked.
 verifi inspect <path>  Resolve the project's dependencies (--json, --sbom)
 verifi update          Download the OSV database into the local cache
 verifi status <path>   Show what is vulnerable and the fix (--json, --db, --offline)
+verifi fix <path>      Apply the recommended fix, or preview it (--apply, --db, --offline)
 verifi version         Print the version
 verifi help            Show this help
 ```
-
-Coming soon: fix.
 <!-- END COMMANDS -->
 
 ## Supported ecosystems

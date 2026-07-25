@@ -27,6 +27,7 @@ you are afraid to touch.
 - [inspect](commands/inspect.md): resolve the dependency tree, export an SBOM.
 - [update](commands/update.md): download the advisory database.
 - [status](commands/status.md): show what is vulnerable and the fix.
+- [fix](commands/fix.md): apply the recommended fix, or preview it.
 - [version](commands/version.md): print the version.
 
 The examples in the command pages are captured from real runs against the test

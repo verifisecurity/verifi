@@ -23,6 +23,7 @@ type Recommendation struct {
 	Purl        string   `json:"purl"`
 	Name        string   `json:"name"`
 	Action      string   `json:"action"` // upgrade | none
+	Current     string   `json:"current,omitempty"`
 	Target      string   `json:"target,omitempty"`
 	Confidence  string   `json:"confidence"` // advisory | structural | behavioural
 	Reason      string   `json:"reason"`
@@ -38,6 +39,7 @@ func Explain(cands []candidate.Candidate) []Recommendation {
 			Purl:       c.Purl,
 			Name:       c.Name,
 			Action:     c.Action,
+			Current:    c.Current,
 			Target:     c.Target,
 			Confidence: "advisory",
 			Evidence:   evidence(c),

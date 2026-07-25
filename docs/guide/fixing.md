@@ -22,23 +22,22 @@ first.
 
 ## Applying a fix
 
-Today you apply the recommendation yourself. For an upgrade:
+`verifi fix` applies the recommendation for you. It previews by default and
+writes nothing:
 
 ```sh
-npm install lodash@4.18.0
+verifi fix path/to/project
 ```
 
-For an unused dependency:
+Add `--apply` to make the change; it runs the package manager, which updates both
+your manifest and lockfile:
 
 ```sh
-npm uninstall left-pad
+verifi fix path/to/project --apply
 ```
 
-Then re-run `verifi status` to confirm it is clear.
+Then re-run `verifi status` to confirm it is clear, and run your tests. See
+[verifi fix](../commands/fix.md) for details.
 
-## Coming soon: `verifi fix`
-
-`verifi fix` will apply the recommended change for you, or open it as a pull
-request you review, so you do not have to run the package manager by hand. It
-previews by default and only writes when you opt in. See the roadmap on the
-[repository](https://github.com/verifisecurity/verifi).
+Removing an unused vulnerable dependency, and opening the change as a pull
+request you review, are on the way.

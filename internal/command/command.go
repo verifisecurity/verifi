@@ -57,10 +57,15 @@ var All = []Command{
 		Example: []string{"status", "testdata/npm/vuln", "--db", "testdata/osv", "--offline"},
 	},
 	{
-		Name: "fix", Args: "<path>", Ready: false,
-		Summary: "Apply a safe fix or open a PR for review",
-		Long:    "Applies the fix that status recommends: upgrade to a safe version, or remove a vulnerable dependency your code never imports. Previews by default; you opt in to writing the change.",
-		Example: nil,
+		Name: "fix", Args: "<path>", Ready: true,
+		Summary: "Apply the recommended fix, or preview it (--apply, --db, --offline)",
+		Long:    "Applies the fix that status recommends: upgrade to a safe version. It previews by default and writes nothing; --apply runs the package manager to make the change. At today's advisory confidence, applying is an explicit opt-in, never silent.",
+		Flags: []Flag{
+			{"--apply", "Write the change via the package manager (default is preview)"},
+			{"--db <dir>", "Use a specific OSV database directory"},
+			{"--offline", "Skip the registry check for published versions"},
+		},
+		Example: []string{"fix", "testdata/npm/vuln", "--db", "testdata/osv", "--offline"},
 	},
 	{
 		Name: "version", Ready: true,
