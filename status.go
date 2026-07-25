@@ -9,7 +9,6 @@ import (
 	"github.com/verifisecurity/verifi/internal/finding"
 	"github.com/verifisecurity/verifi/internal/inventory"
 	"github.com/verifisecurity/verifi/internal/reason"
-	usagescan "github.com/verifisecurity/verifi/internal/usage"
 )
 
 // runStatus implements `verifi status <path> [--json] [--db <dir>] [--offline]`:
@@ -44,13 +43,13 @@ func runStatus(args []string) error {
 		path = "."
 	}
 
-	inv, findings, recs, err := analyze(path, dbDir, offline)
+	res, err := analyze(path, dbDir, offline)
 	if err != nil {
 		return err
 	}
 
 	if asJSON {
-		out, err := json.MarshalIndent(findings, "", "  ")
+		out, err := json.MarshalIndent(res.findings, "", "  ")
 		if err != nil {
 			return err
 		}
@@ -58,9 +57,7 @@ func runStatus(args []string) error {
 		return nil
 	}
 
-	// Best-effort: a scan error just means no usage signal, not a failure.
-	imported, _ := usagescan.Scan(path)
-	printStatus(inv, findings, recs, imported)
+	printStatus(res.inv, res.findings, res.recs, res.imported)
 	return nil
 }
 
@@ -105,9 +102,12 @@ func printStatus(inv *inventory.Inventory, findings []finding.Finding, recs []re
 			fmt.Printf("   %s   %s\n", id, f.Summary)
 		}
 		if r, ok := recByName[name]; ok {
-			if r.Action == "upgrade" {
+			switch r.Action {
+			case "upgrade":
 				fmt.Printf("   Fix: upgrade to %s   confidence: %s\n", r.Target, r.Confidence)
-			} else {
+			case "remove":
+				fmt.Printf("   Fix: remove %s   confidence: %s\n", r.Name, r.Confidence)
+			default:
 				fmt.Printf("   No published fix   confidence: %s\n", r.Confidence)
 			}
 			fmt.Printf("        %s\n", r.Reason)

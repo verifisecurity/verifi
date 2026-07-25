@@ -11,36 +11,55 @@ import (
 	"github.com/verifisecurity/verifi/internal/osv"
 	"github.com/verifisecurity/verifi/internal/reason"
 	"github.com/verifisecurity/verifi/internal/registry"
+	usagescan "github.com/verifisecurity/verifi/internal/usage"
 )
 
+// analysis is the read-only result for a project.
+type analysis struct {
+	inv      *inventory.Inventory
+	findings []finding.Finding
+	recs     []reason.Recommendation
+	imported map[string]bool // packages the project's own code imports
+}
+
 // analyze runs the read-only pipeline for a project: resolve the dependencies,
-// match them against the local OSV database, and reason about each fix. Shared
-// by `status` and `fix`. npm for now.
-func analyze(path, dbDir string, offline bool) (*inventory.Inventory, []finding.Finding, []reason.Recommendation, error) {
+// match them against the local OSV database, scan the source for imports, and
+// reason about each fix. Shared by `status` and `fix`. npm for now.
+func analyze(path, dbDir string, offline bool) (*analysis, error) {
 	lockPath := filepath.Join(path, "package-lock.json")
 	data, err := os.ReadFile(lockPath)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("read %s: %w", lockPath, err)
+		return nil, fmt.Errorf("read %s: %w", lockPath, err)
 	}
 	inv, err := inventory.ParseNpmLock(data)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, err
 	}
 	if dbDir == "" {
 		dbDir = filepath.Join(cacheRoot(), inv.Ecosystem)
 	}
 	db, err := osv.Load(dbDir)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("no OSV database at %s\nrun `verifi update` to download it, or pass --db <dir>", dbDir)
+		return nil, fmt.Errorf("no OSV database at %s\nrun `verifi update` to download it, or pass --db <dir>", dbDir)
 	}
 	findings := db.Match(inv)
+
+	// Best-effort usage scan: it drives the remove recommendation and the view.
+	imported, _ := usagescan.Scan(path)
+	direct := map[string]bool{}
+	for _, p := range inv.Packages {
+		if p.Direct {
+			direct[p.Name] = true
+		}
+	}
+	removable := func(name string) bool { return direct[name] && !imported[name] }
 
 	var exists candidate.Exists
 	if !offline {
 		exists = registryExists()
 	}
-	recs := reason.Explain(candidate.Compute(findings, exists))
-	return inv, findings, recs, nil
+	recs := reason.Explain(candidate.Compute(findings, exists, removable))
+	return &analysis{inv: inv, findings: findings, recs: recs, imported: imported}, nil
 }
 
 // registryExists returns a predicate that reports whether a package version is

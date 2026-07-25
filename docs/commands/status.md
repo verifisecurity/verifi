@@ -49,10 +49,9 @@ HIGH     lodash 4.17.11   direct
 MEDIUM   minimist 1.2.0   direct
    used: not imported by your code, removing it may clear this
    CVE-2021-44906 (GHSA-xvch-5gv4-984h)   Prototype pollution in minimist
-   Fix: upgrade to 1.2.6   confidence: advisory
-        Clears GHSA-xvch-5gv4-984h (fixed in 1.2.6 per OSV), a patch bump from 1.2.0.
-        - Code impact not checked: not yet verified whether your code uses a changed part of the package.
-        - Behaviour not verified: run your tests after upgrading.
+   Fix: remove minimist   confidence: advisory
+        Your code does not import it; removing it clears GHSA-xvch-5gv4-984h at no compatibility risk.
+        - Usage is heuristic: a dynamic import or a config-referenced loader can hide a real use, so confirm it is unused.
 
 Next: impact (does the fix touch code you use) and behavioural checks.
 ```

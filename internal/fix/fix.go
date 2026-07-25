@@ -38,6 +38,14 @@ func Build(recs []reason.Recommendation) Plan {
 				Command: []string{"npm", "install", r.Name + "@" + r.Target},
 				Reason:  r.Reason,
 			})
+		case "remove":
+			p.Actions = append(p.Actions, Action{
+				Kind:    "remove",
+				Name:    r.Name,
+				From:    r.Current,
+				Command: []string{"npm", "uninstall", r.Name},
+				Reason:  r.Reason,
+			})
 		default:
 			p.Skipped = append(p.Skipped, r.Name)
 		}

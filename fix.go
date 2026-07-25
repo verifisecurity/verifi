@@ -39,11 +39,11 @@ func runFix(args []string) error {
 		path = "."
 	}
 
-	_, _, recs, err := analyze(path, dbDir, offline)
+	res, err := analyze(path, dbDir, offline)
 	if err != nil {
 		return err
 	}
-	plan := fix.Build(recs)
+	plan := fix.Build(res.recs)
 
 	if plan.Empty() {
 		fmt.Println("Nothing to fix.")
@@ -63,7 +63,7 @@ func runFix(args []string) error {
 func printPlan(plan fix.Plan) {
 	fmt.Printf("Planned fixes (%d). Nothing is written without --apply.\n\n", len(plan.Actions))
 	for _, a := range plan.Actions {
-		fmt.Printf("  %s %s: %s -> %s\n", a.Kind, a.Name, a.From, a.To)
+		fmt.Printf("  %s\n", actionLine(a))
 		fmt.Printf("      %s\n", a.Reason)
 		fmt.Printf("      $ %s\n\n", join(a.Command))
 	}
@@ -73,9 +73,16 @@ func printPlan(plan fix.Plan) {
 	fmt.Println("Apply with:  verifi fix <path> --apply")
 }
 
+func actionLine(a fix.Action) string {
+	if a.Kind == "remove" {
+		return "remove " + a.Name
+	}
+	return fmt.Sprintf("upgrade %s: %s -> %s", a.Name, a.From, a.To)
+}
+
 func applyPlan(path string, plan fix.Plan) error {
 	for _, a := range plan.Actions {
-		fmt.Printf("%s %s -> %s\n  $ %s\n", a.Kind, a.Name, a.To, join(a.Command))
+		fmt.Printf("%s\n  $ %s\n", actionLine(a), join(a.Command))
 		cmd := exec.Command(a.Command[0], a.Command[1:]...)
 		cmd.Dir = path
 		cmd.Stdout = os.Stdout

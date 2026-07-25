@@ -34,6 +34,17 @@ func TestExplain_HonestLimits(t *testing.T) {
 	}
 }
 
+func TestExplain_Remove(t *testing.T) {
+	cands := []candidate.Candidate{{Name: "minimist", Action: "remove", Clears: []string{"CVE-X"}}}
+	r := Explain(cands)[0]
+	if r.Action != "remove" {
+		t.Errorf("action = %q, want remove", r.Action)
+	}
+	if !strings.Contains(r.Reason, "does not import") {
+		t.Errorf("remove reason should mention it is not imported, got: %s", r.Reason)
+	}
+}
+
 func TestExplain_NoFix(t *testing.T) {
 	cands := []candidate.Candidate{
 		{Name: "pkg", Current: "1.0.0", Action: "none", Residual: []string{"CVE-Y"}},
@@ -59,7 +70,7 @@ func TestExplain_Golden(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}
-	got, err := json.MarshalIndent(Explain(candidate.Compute(db.Match(inv), nil)), "", "  ")
+	got, err := json.MarshalIndent(Explain(candidate.Compute(db.Match(inv), nil, nil)), "", "  ")
 	if err != nil {
 		t.Fatal(err)
 	}

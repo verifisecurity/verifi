@@ -41,13 +41,31 @@ func TestCompute_MultiAdvisory(t *testing.T) {
 		{Name: "pkg", Version: "1.0.0", Purl: "pkg:npm/pkg@1.0.0", Advisory: "A", FixedVersions: []string{"1.2.0"}},
 		{Name: "pkg", Version: "1.0.0", Purl: "pkg:npm/pkg@1.0.0", Advisory: "B", FixedVersions: []string{"1.5.0"}},
 	}
-	got := Compute(fs, nil)
+	got := Compute(fs, nil, nil)
 	if len(got) != 1 {
 		t.Fatalf("candidates = %d, want 1", len(got))
 	}
 	c := got[0]
 	if c.Target != "1.5.0" || c.Distance != "minor" || len(c.Clears) != 2 {
 		t.Errorf("got %+v, want target 1.5.0, minor, clears both", c)
+	}
+}
+
+func TestCompute_Remove(t *testing.T) {
+	// An unused direct dependency: remove is preferred over upgrade.
+	fs := []finding.Finding{
+		{Name: "minimist", Version: "1.2.0", Purl: "pkg:npm/minimist@1.2.0", Advisory: "A", FixedVersions: []string{"1.2.6"}},
+	}
+	removable := func(name string) bool { return name == "minimist" }
+	c := Compute(fs, nil, removable)[0]
+	if c.Action != "remove" {
+		t.Errorf("action = %q, want remove", c.Action)
+	}
+	if c.Target != "" {
+		t.Errorf("remove should have no target, got %q", c.Target)
+	}
+	if len(c.Clears) != 1 || c.Clears[0] != "A" {
+		t.Errorf("clears = %v, want [A]", c.Clears)
 	}
 }
 
@@ -59,7 +77,7 @@ func TestCompute_SkipsUnpublishedFix(t *testing.T) {
 		{Name: "lodash", Version: "4.17.11", Purl: "pkg:npm/lodash@4.17.11", Advisory: "PHANTOM", FixedVersions: []string{"4.18.0"}},
 	}
 	exists := func(name, version string) bool { return version == "4.17.21" } // 4.18.0 not published
-	c := Compute(fs, exists)[0]
+	c := Compute(fs, exists, nil)[0]
 	if c.Target != "4.17.21" {
 		t.Errorf("target = %q, want 4.17.21 (not the phantom 4.18.0)", c.Target)
 	}
@@ -87,7 +105,7 @@ func TestCompute_Golden(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}
-	got, err := json.MarshalIndent(Compute(db.Match(inv), nil), "", "  ")
+	got, err := json.MarshalIndent(Compute(db.Match(inv), nil, nil), "", "  ")
 	if err != nil {
 		t.Fatal(err)
 	}

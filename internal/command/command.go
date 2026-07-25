@@ -59,7 +59,7 @@ var All = []Command{
 	{
 		Name: "fix", Args: "<path>", Ready: true,
 		Summary: "Apply the recommended fix, or preview it (--apply, --db, --offline)",
-		Long:    "Applies the fix that status recommends: upgrade to a safe version. It previews by default and writes nothing; --apply runs the package manager to make the change. At today's advisory confidence, applying is an explicit opt-in, never silent.",
+		Long:    "Applies the fix that status recommends: upgrade to a safe version, or remove a direct dependency your code never imports. It previews by default and writes nothing; --apply runs the package manager to make the change. At today's advisory confidence, applying is an explicit opt-in, never silent.",
 		Flags: []Flag{
 			{"--apply", "Write the change via the package manager (default is preview)"},
 			{"--db <dir>", "Use a specific OSV database directory"},

@@ -33,6 +33,18 @@ func TestBuild(t *testing.T) {
 	}
 }
 
+func TestBuild_Remove(t *testing.T) {
+	recs := []reason.Recommendation{{Name: "minimist", Action: "remove", Reason: "unused"}}
+	a := Build(recs).Actions[0]
+	if a.Kind != "remove" {
+		t.Errorf("kind = %q, want remove", a.Kind)
+	}
+	want := []string{"npm", "uninstall", "minimist"}
+	if !reflect.DeepEqual(a.Command, want) {
+		t.Errorf("command = %v, want %v", a.Command, want)
+	}
+}
+
 func TestBuild_Empty(t *testing.T) {
 	if !Build(nil).Empty() {
 		t.Error("nil recommendations should give an empty plan")

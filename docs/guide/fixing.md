@@ -36,8 +36,8 @@ your manifest and lockfile:
 verifi fix path/to/project --apply
 ```
 
-Then re-run `verifi status` to confirm it is clear, and run your tests. See
-[verifi fix](../commands/fix.md) for details.
+`verifi fix` handles both an upgrade and a removal, whichever status recommends
+for each package. Then re-run `verifi status` to confirm it is clear, and run
+your tests. See [verifi fix](../commands/fix.md) for details.
 
-Removing an unused vulnerable dependency, and opening the change as a pull
-request you review, are on the way.
+Opening the change as a pull request you review is on the way.

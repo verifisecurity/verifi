@@ -33,7 +33,12 @@ type Exists func(name, version string) bool
 // by package name, advisory lists sorted. A fixed version that does not exist
 // on the registry (per exists) is skipped, so an advisory whose only fix is
 // unpublished falls to residual instead of recommending a phantom version.
-func Compute(findings []finding.Finding, exists Exists) []Candidate {
+//
+// removable reports whether a package can simply be removed (a direct
+// dependency the project never imports). When it can, remove is preferred over
+// upgrade: it clears every advisory at no compatibility risk. A nil predicate
+// means nothing is removable.
+func Compute(findings []finding.Finding, exists Exists, removable func(name string) bool) []Candidate {
 	byPkg := map[string][]finding.Finding{}
 	var order []string
 	for _, f := range findings {
@@ -48,6 +53,21 @@ func Compute(findings []finding.Finding, exists Exists) []Candidate {
 	for _, name := range order {
 		fs := byPkg[name]
 		current := fs[0].Version
+
+		// An unused direct dependency: removing it clears everything, no upgrade.
+		if removable != nil && removable(name) {
+			var clears []string
+			for _, f := range fs {
+				clears = append(clears, f.Advisory)
+			}
+			sort.Strings(clears)
+			out = append(out, Candidate{
+				Purl: fs[0].Purl, Name: name, Current: current,
+				Action: "remove", Clears: clears,
+			})
+			continue
+		}
+
 		var clears, residual []string
 		target := ""
 		for _, f := range fs {

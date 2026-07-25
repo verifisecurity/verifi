@@ -44,18 +44,23 @@ func Explain(cands []candidate.Candidate) []Recommendation {
 			Confidence: "advisory",
 			Evidence:   evidence(c),
 		}
-		if c.Action != "upgrade" {
+		switch c.Action {
+		case "remove":
+			r.Reason = fmt.Sprintf("Your code does not import it; removing it clears %s at no compatibility risk.", join(c.Clears))
+			r.Limitations = []string{
+				"Usage is heuristic: a dynamic import or a config-referenced loader can hide a real use, so confirm it is unused.",
+			}
+		case "upgrade":
+			r.Reason = fmt.Sprintf("Clears %s (fixed in %s per OSV), a %s bump from %s.",
+				join(c.Clears), c.Target, c.Distance, c.Current)
+			r.Limitations = limitations(c)
+		default:
 			r.Reason = fmt.Sprintf("No published version clears %s.", join(c.Residual))
 			r.Limitations = []string{
 				"No safe version to upgrade to yet.",
 				"Consider removing or replacing the package if it is not essential.",
 			}
-			out = append(out, r)
-			continue
 		}
-		r.Reason = fmt.Sprintf("Clears %s (fixed in %s per OSV), a %s bump from %s.",
-			join(c.Clears), c.Target, c.Distance, c.Current)
-		r.Limitations = limitations(c)
 		out = append(out, r)
 	}
 	return out
