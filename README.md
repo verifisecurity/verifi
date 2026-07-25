@@ -24,8 +24,16 @@ plugs into.
 ## Install
 
 <!-- BEGIN INSTALL -->
+**macOS and Linux**
+
 ```sh
 curl -fsSL https://raw.githubusercontent.com/verifisecurity/verifi/main/install.sh | sh
+```
+
+**Windows** (PowerShell)
+
+```powershell
+irm https://raw.githubusercontent.com/verifisecurity/verifi/main/install.ps1 | iex
 ```
 <!-- END INSTALL -->
 

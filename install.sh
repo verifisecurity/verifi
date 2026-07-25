@@ -20,6 +20,44 @@ say()  { printf '  %s\n' "$1"; }
 warn() { printf '  ! %s\n' "$1" >&2; }
 die()  { printf '\n  error: %s\n\n' "$1" >&2; exit 1; }
 
+# Make `dir` reachable in future shells. If it is already on PATH there is
+# nothing to do. Otherwise append the right line to the login shell's rc file
+# (idempotently) so a new terminal just works, and print the one-liner to fix
+# the current terminal too. Set VERIFI_NO_MODIFY_PATH=1 to only print the hint.
+persist_path() {
+  dir="$1"
+  case ":$PATH:" in
+    *":$dir:"*) return 0 ;;
+  esac
+
+  hint="export PATH=\"$dir:\$PATH\""
+  if [ "${VERIFI_NO_MODIFY_PATH:-0}" = "1" ]; then
+    warn "$dir is not on your PATH."
+    say  "Add it:  $hint"
+    return 0
+  fi
+
+  line="$hint"
+  case "$(basename "${SHELL:-sh}")" in
+    zsh)  rc="$HOME/.zshrc" ;;
+    bash) if [ -f "$HOME/.bashrc" ]; then rc="$HOME/.bashrc"; else rc="$HOME/.bash_profile"; fi ;;
+    fish) rc="$HOME/.config/fish/config.fish"; line="fish_add_path \"$dir\"" ;;
+    *)    rc="$HOME/.profile" ;;
+  esac
+
+  mkdir -p "$(dirname "$rc")" 2>/dev/null || true
+  if [ -f "$rc" ] && grep -Fq "$dir" "$rc" 2>/dev/null; then
+    say "PATH entry already in $rc"
+  elif printf '\n# Added by the Verifi installer\n%s\n' "$line" >> "$rc" 2>/dev/null; then
+    say "added $dir to your PATH in $rc"
+  else
+    warn "could not update $rc automatically."
+    say  "Add this line yourself:  $hint"
+    return 0
+  fi
+  say "for this terminal, run:  $hint"
+}
+
 # --- pick a downloader -------------------------------------------------------
 if command -v curl >/dev/null 2>&1; then
   fetch() { curl -fsSL "$1" -o "$2"; }
@@ -108,14 +146,9 @@ fi
 
 say "installed: $dir/verifi"
 
-# --- PATH hint + first run ---------------------------------------------------
-case ":$PATH:" in
-  *":$dir:"*) : ;;
-  *) warn "$dir is not on your PATH. Add it, e.g.:  export PATH=\"$dir:\$PATH\"" ;;
-esac
+# --- PATH + first run --------------------------------------------------------
+persist_path "$dir"
 
 printf '\n'
-if command -v verifi >/dev/null 2>&1; then
-  verifi version || true
-fi
+"$dir/verifi" version || true
 printf '\n  Done. Run `verifi` to say hello.\n\n'

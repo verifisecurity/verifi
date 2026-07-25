@@ -15,7 +15,10 @@ import (
 	"github.com/verifisecurity/verifi/internal/ecosystem"
 )
 
-const installURL = "https://raw.githubusercontent.com/verifisecurity/verifi/main/install.sh"
+const (
+	installURL   = "https://raw.githubusercontent.com/verifisecurity/verifi/main/install.sh"
+	installURLPS = "https://raw.githubusercontent.com/verifisecurity/verifi/main/install.ps1"
+)
 
 // Generate regenerates the README and the per-command docs pages. examples maps
 // a command name to its captured real output; commands without an example are
@@ -127,7 +130,8 @@ func flagsBlock(c command.Command) string {
 }
 
 func installBlock() string {
-	return "```sh\ncurl -fsSL " + installURL + " | sh\n```"
+	return "**macOS and Linux**\n\n```sh\ncurl -fsSL " + installURL + " | sh\n```\n\n" +
+		"**Windows** (PowerShell)\n\n```powershell\nirm " + installURLPS + " | iex\n```"
 }
 
 func ecosystemsBlock() string {
