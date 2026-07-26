@@ -89,10 +89,9 @@ func applyPlan(path string, plan fix.Plan) error {
 }
 
 // applyPlanTo runs each action's package-manager command in path, streaming
-// output to out and errw. It is the shared apply core: the terminal `fix
-// --apply` passes the process streams, the apply_fix MCP tool passes a buffer to
-// capture the result. It writes to the project; the caller decides whether that
-// is allowed.
+// output to out and errw. It is the shared apply core, taking writers so a
+// caller can capture the result instead of streaming it to the terminal. It
+// writes to the project; the caller decides whether that is allowed.
 func applyPlanTo(out, errw io.Writer, path string, plan fix.Plan) error {
 	for _, a := range plan.Actions {
 		fmt.Fprintf(out, "%s\n  $ %s\n", actionLine(a), join(a.Command))
