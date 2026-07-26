@@ -76,16 +76,27 @@ func Evaluate(e Evidence) Decision {
 
 	case "upgrade":
 		switch {
-		case e.TargetExists && (e.Distance == "patch" || e.Distance == "minor"):
+		case !e.TargetExists:
+			d.Reasons = append(d.Reasons, "No published version to upgrade to; describing the exposure only.")
+		case !e.Direct:
+			// A transitive package cannot be fixed by installing it. `npm install
+			// pkg@version` adds a top-level entry for something the project never
+			// depended on directly, and if the parent's range excludes the new
+			// version npm keeps the vulnerable copy nested underneath, so the
+			// advisory survives a change that reported success. Forcing a
+			// transitive version needs an overrides entry, which is a different
+			// change from an install, so this stays a proposal until verifi can
+			// make it properly.
+			d.Reasons = append(d.Reasons, "Pulled in by another package, so installing it directly would add a top-level pin and might not clear the advisory. Forcing a transitive version needs an overrides entry; describing it only.")
+		case e.Distance == "patch" || e.Distance == "minor":
 			d.Authorization = Confirm
 			d.Reasons = append(d.Reasons, fmt.Sprintf("A %s upgrade to a published version clears the advisory.", e.Distance))
-		case e.TargetExists && e.Distance == "major":
+		case e.Distance == "major":
 			d.Authorization = Confirm
 			d.Reasons = append(d.Reasons, "A major upgrade to a published version clears the advisory.")
 			d.Warnings = append(d.Warnings, "Major version bump: the public API may change. Review before applying.")
 		default:
-			// No published target, or an unknown jump: nothing safe to apply.
-			d.Reasons = append(d.Reasons, "No published version to upgrade to; describing the exposure only.")
+			d.Reasons = append(d.Reasons, "Unrecognised version distance; describing the exposure only.")
 		}
 
 	default: // "none", or any action with no fix

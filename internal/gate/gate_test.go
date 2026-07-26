@@ -28,24 +28,32 @@ func TestEvaluate(t *testing.T) {
 			wantAuth: Propose,
 		},
 		{
-			name:     "upgrade a patch bump",
-			ev:       Evidence{Action: "upgrade", TargetExists: true, Distance: "patch"},
+			name:     "upgrade a direct patch bump",
+			ev:       Evidence{Action: "upgrade", Direct: true, TargetExists: true, Distance: "patch"},
 			wantAuth: Confirm,
 		},
 		{
-			name:     "upgrade a minor bump",
-			ev:       Evidence{Action: "upgrade", TargetExists: true, Distance: "minor"},
+			name:     "upgrade a direct minor bump",
+			ev:       Evidence{Action: "upgrade", Direct: true, TargetExists: true, Distance: "minor"},
 			wantAuth: Confirm,
 		},
 		{
-			name:        "upgrade a major bump warns but still confirms",
-			ev:          Evidence{Action: "upgrade", TargetExists: true, Distance: "major"},
+			name:        "upgrade a direct major bump warns but still confirms",
+			ev:          Evidence{Action: "upgrade", Direct: true, TargetExists: true, Distance: "major"},
 			wantAuth:    Confirm,
 			wantWarning: true,
 		},
 		{
+			// `npm install pkg@version` on a transitive adds a top-level pin and
+			// can leave the vulnerable copy nested under its parent, so verifi
+			// describes it rather than applying a change that may not work.
+			name:     "upgrade a transitive dependency is only ever proposed",
+			ev:       Evidence{Action: "upgrade", Direct: false, TargetExists: true, Distance: "patch"},
+			wantAuth: Propose,
+		},
+		{
 			name:     "upgrade with no published target",
-			ev:       Evidence{Action: "upgrade", TargetExists: false, Distance: "minor"},
+			ev:       Evidence{Action: "upgrade", Direct: true, TargetExists: false, Distance: "minor"},
 			wantAuth: Propose,
 		},
 		{
@@ -55,7 +63,7 @@ func TestEvaluate(t *testing.T) {
 		},
 		{
 			name:        "patch upgrade with a residual advisory warns",
-			ev:          Evidence{Action: "upgrade", TargetExists: true, Distance: "patch", Residual: []string{"GHSA-xxxx"}},
+			ev:          Evidence{Action: "upgrade", Direct: true, TargetExists: true, Distance: "patch", Residual: []string{"GHSA-xxxx"}},
 			wantAuth:    Confirm,
 			wantWarning: true,
 		},

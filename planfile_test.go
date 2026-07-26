@@ -170,3 +170,40 @@ func TestScan_OutNeedsAValue(t *testing.T) {
 		t.Errorf("error = %v, want a complaint about --out", err)
 	}
 }
+
+// TestScan_TransitiveUpgradeIsProposedNotApplied covers the limitation verifi
+// now states rather than papering over. `npm install pkg@version` cannot fix a
+// transitive dependency: it adds a top-level pin for something the project never
+// depended on, and npm may keep the vulnerable copy nested under its parent. So
+// a transitive upgrade is described, never marked applicable, until verifi can
+// write an overrides entry instead.
+func TestScan_TransitiveUpgradeIsProposedNotApplied(t *testing.T) {
+	home := isolate(t)
+	ws := filepath.Join("testdata", "npm", "transitive")
+	capture(t, func() error {
+		return runScan([]string{ws, "--db", fixtureDB(), "--offline"})
+	})
+
+	p, err := plan.Read(plan.Path(home, ws))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var lodash *plan.Candidate
+	for i := range p.Candidates {
+		if p.Candidates[i].Package == "lodash" {
+			lodash = &p.Candidates[i]
+		}
+	}
+	if lodash == nil {
+		t.Fatal("no candidate for the transitive lodash")
+	}
+	if lodash.Evidence.Direct {
+		t.Error("lodash is transitive here, but the evidence says direct")
+	}
+	if lodash.Gate.Authorization != gate.Propose {
+		t.Errorf("transitive upgrade authorization = %q, want %q", lodash.Gate.Authorization, gate.Propose)
+	}
+	if !strings.Contains(strings.Join(lodash.Gate.Reasons, " "), "overrides") {
+		t.Errorf("the reason should say what would actually fix it, got: %v", lodash.Gate.Reasons)
+	}
+}

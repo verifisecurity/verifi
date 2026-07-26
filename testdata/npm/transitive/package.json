@@ -1,0 +1,7 @@
+{
+  "name": "transitive-app",
+  "version": "1.0.0",
+  "dependencies": {
+    "wrapper": "1.0.0"
+  }
+}
