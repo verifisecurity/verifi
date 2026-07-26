@@ -9,6 +9,7 @@ import (
 	"github.com/verifisecurity/verifi/internal/finding"
 	"github.com/verifisecurity/verifi/internal/inventory"
 	"github.com/verifisecurity/verifi/internal/osv"
+	"github.com/verifisecurity/verifi/internal/plan"
 	"github.com/verifisecurity/verifi/internal/reason"
 )
 
@@ -21,7 +22,7 @@ import (
 // its own. By default the scan checks the registry so it only recommends
 // versions that exist; --offline skips that and trusts OSV's fixed versions.
 func runScan(args []string) error {
-	path, dbDir := "", ""
+	path, dbDir, outPath := "", "", ""
 	asJSON, asSBOM, asInventory, offline, download := false, false, false, false, false
 	for i := 0; i < len(args); i++ {
 		a := args[i]
@@ -42,6 +43,12 @@ func runScan(args []string) error {
 			}
 			i++
 			dbDir = args[i]
+		case "--out":
+			if i+1 >= len(args) {
+				return fmt.Errorf("--out needs a file path")
+			}
+			i++
+			outPath = args[i]
 		default:
 			if len(a) > 0 && a[0] == '-' {
 				return fmt.Errorf("unknown flag %q", a)
@@ -97,6 +104,19 @@ func runScan(args []string) error {
 		return err
 	}
 
+	// Every scan writes the plan, so `verifi fix` always has something current to
+	// read whichever view was asked for. It goes under the verifi home, never
+	// into the scanned project, so scanning cannot dirty someone's working tree.
+	p := buildPlan(res, path, version)
+	p.Generated = now()
+	planPath := outPath
+	if planPath == "" {
+		planPath = plan.Path(verifiHome(), path)
+	}
+	if err := plan.Write(planPath, p); err != nil {
+		return fmt.Errorf("write plan: %w", err)
+	}
+
 	if asJSON {
 		out, err := json.MarshalIndent(res.findings, "", "  ")
 		if err != nil {
@@ -107,7 +127,25 @@ func runScan(args []string) error {
 	}
 
 	printFindings(res.inv, res.findings, res.recs, res.imported, res.dbMeta)
+	printPlanHint(planPath, p)
 	return nil
+}
+
+// printPlanHint tells the user where the plan went and what to do with it. It is
+// the handover from scan to the human: nothing is applied until someone opens
+// this file and marks something.
+func printPlanHint(path string, p plan.Plan) {
+	actionable := 0
+	for _, c := range p.Candidates {
+		if c.Actionable() {
+			actionable++
+		}
+	}
+	if actionable == 0 {
+		return
+	}
+	fmt.Printf("Plan written to %s\n", path)
+	fmt.Printf("Mark the fixes you want with \"apply\": true, then run: verifi fix %s\n", p.Workspace)
 }
 
 func printFindings(inv *inventory.Inventory, findings []finding.Finding, recs []reason.Recommendation, imported map[string]bool, dbMeta *osv.Meta) {
@@ -145,7 +183,7 @@ func printFindings(inv *inventory.Inventory, findings []finding.Finding, recs []
 	for _, name := range order {
 		fs := byPkg[name]
 		fmt.Printf("%-8s %s %s   %s\n", sevLabel(worstRank(fs)), name, fs[0].Version, directTag(inv, name))
-		fmt.Printf("   %s\n", usageLine(inv, name, imported))
+		fmt.Printf("   used: %s\n", usageLine(inv, name, imported))
 		for _, f := range fs {
 			id := f.Advisory
 			if len(f.Aliases) > 0 {
@@ -213,14 +251,16 @@ func sevLabel(rank int) string {
 
 // usageLine states whether the project's own code imports this package. A
 // vulnerable direct dependency nothing imports is a strong remove candidate.
+// The phrase is bare so it reads correctly both behind the view's "used:" label
+// and on its own as the plan's `used` field.
 func usageLine(inv *inventory.Inventory, name string, imported map[string]bool) string {
 	if directTag(inv, name) != "direct" {
-		return "used: indirectly, pulled in by another dependency"
+		return "indirectly, pulled in by another dependency"
 	}
 	if imported[name] {
-		return "used: imported by your code"
+		return "imported by your code"
 	}
-	return "used: not imported by your code, removing it may clear this"
+	return "not imported by your code, removing it may clear this"
 }
 
 func directTag(inv *inventory.Inventory, name string) string {

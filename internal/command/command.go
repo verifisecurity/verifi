@@ -29,7 +29,7 @@ var All = []Command{
 	{
 		Name: "scan", Args: "<path>", Ready: true,
 		Summary: "Report what is vulnerable and the fix for each one",
-		Long:    "Resolves a project's full dependency tree and matches it against the OSV advisory database, then reports for each vulnerable package whether your code imports it, the version to move to, what that clears, and the honest limits of what has been checked. Read-only, it never changes your project. Use --inventory or --sbom to describe the tree without looking for advisories; neither needs a database. The first scan needs the advisory database, which --download fetches into ~/.verifi/osv.",
+		Long:    "Resolves a project's full dependency tree and matches it against the OSV advisory database, then reports for each vulnerable package whether your code imports it, the version to move to, what that clears, and the honest limits of what has been checked. It changes nothing in your project. Every scan writes a plan: each fix it found, with the evidence and the gate's verdict, every entry marked apply=false. Mark the ones you want and `verifi fix` applies those. Use --inventory or --sbom to describe the tree without looking for advisories; neither needs a database. The first scan needs the advisory database, which --download fetches into ~/.verifi/osv.",
 		Flags: []Flag{
 			{"--json", "Print the selected view as JSON"},
 			{"--inventory", "Report the dependency tree instead of the findings"},
@@ -37,6 +37,7 @@ var All = []Command{
 			{"--download", "Fetch the OSV database into the local cache first"},
 			{"--db <dir>", "Use a specific OSV database directory"},
 			{"--offline", "Skip the registry check for published versions"},
+			{"--out <file>", "Write the plan here instead of the default location"},
 		},
 		Example: []string{"scan", "testdata/npm/vuln", "--db", "testdata/osv", "--offline"},
 	},

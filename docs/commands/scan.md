@@ -27,16 +27,49 @@ verifi scan <path>
 
 <!-- BEGIN FLAGS -->
 ```
---json       Print the selected view as JSON
---inventory  Report the dependency tree instead of the findings
---sbom       Print the dependency tree as a CycloneDX SBOM
---download   Fetch the OSV database into the local cache first
---db <dir>   Use a specific OSV database directory
---offline    Skip the registry check for published versions
+--json        Print the selected view as JSON
+--inventory   Report the dependency tree instead of the findings
+--sbom        Print the dependency tree as a CycloneDX SBOM
+--download    Fetch the OSV database into the local cache first
+--db <dir>    Use a specific OSV database directory
+--offline     Skip the registry check for published versions
+--out <file>  Write the plan here instead of the default location
 ```
 <!-- END FLAGS -->
 
 `--json` is a modifier on whichever view you selected, not a view of its own.
+
+## The plan
+
+Every scan writes a plan: every fix it found, with the evidence behind it and
+the gate's verdict, each entry marked `"apply": false`.
+
+```json
+{
+  "apply": false,
+  "package": "lodash",
+  "current": "4.17.11",
+  "action": "upgrade",
+  "target": "4.17.21",
+  "command": ["npm", "install", "lodash@4.17.21"],
+  "distance": "patch",
+  "clears": ["GHSA-35jh-r3h4-6jhm"],
+  "used": "imported by your code",
+  "gate": { "rung": "advisory", "authorization": "confirm" }
+}
+```
+
+Open it, set `"apply": true` on the fixes you want, and run
+[`verifi fix`](fix.md). Nothing is applied until you do: a scan never marks
+anything, so a fix straight after a scan is a no-op.
+
+The plan lives under `~/.verifi/projects/`, keyed to the project, not inside the
+project itself, so scanning a repository never changes it. `scan` prints the
+path each time. Use `--out <file>` to write it somewhere else, for instance into
+the repository so a team can review it like any other change.
+
+The plan also records what it was computed from: the advisory source, when that
+data was fetched, and the version of verifi that wrote it.
 
 ## The first scan
 
@@ -76,6 +109,9 @@ MEDIUM   minimist 1.2.0   direct
    Fix: remove minimist   confidence: advisory
         Your code does not import it; removing it clears GHSA-xvch-5gv4-984h at no compatibility risk.
         - Usage is heuristic: a dynamic import or a config-referenced loader can hide a real use, so confirm it is unused.
+
+Plan written to ~/.verifi/projects/<project>/candidates.json
+Mark the fixes you want with "apply": true, then run: verifi fix testdata/npm/vuln
 ```
 <!-- END EXAMPLE -->
 

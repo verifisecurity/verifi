@@ -16,3 +16,5 @@ MEDIUM   minimist 1.2.0   direct
         Your code does not import it; removing it clears GHSA-xvch-5gv4-984h at no compatibility risk.
         - Usage is heuristic: a dynamic import or a config-referenced loader can hide a real use, so confirm it is unused.
 
+Plan written to <plan>
+Mark the fixes you want with "apply": true, then run: verifi fix <workspace>

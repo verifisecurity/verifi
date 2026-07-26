@@ -25,11 +25,20 @@ func downloadDB(ecosystem string) error {
 	return nil
 }
 
-// cacheRoot is where the downloaded OSV database lives, one directory per
-// ecosystem underneath.
-func cacheRoot() string {
-	if h, err := os.UserHomeDir(); err == nil {
-		return filepath.Join(h, ".verifi", "osv")
+// verifiHome is the root of everything verifi stores on the machine: the
+// advisory cache and the per-project plans. VERIFI_HOME relocates all of it,
+// which is how the tests keep off a real home directory.
+func verifiHome() string {
+	if h := os.Getenv("VERIFI_HOME"); h != "" {
+		return h
 	}
-	return filepath.Join(".verifi", "osv")
+	if h, err := os.UserHomeDir(); err == nil {
+		return filepath.Join(h, ".verifi")
+	}
+	return ".verifi"
 }
+
+// cacheRoot is where the downloaded OSV database lives, one directory per
+// ecosystem underneath. It is a cache: disposable and re-fetchable, unlike the
+// plans alongside it.
+func cacheRoot() string { return filepath.Join(verifiHome(), "osv") }

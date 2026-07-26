@@ -1,0 +1,84 @@
+{
+  "schema": 1,
+  "generated": "2026-07-27T12:00:00Z",
+  "verifi": "dev",
+  "workspace": "\u003cworkspace\u003e",
+  "ecosystem": "npm",
+  "advisories": {
+    "source": "db",
+    "path": "testdata/osv"
+  },
+  "candidates": [
+    {
+      "apply": false,
+      "package": "lodash",
+      "current": "4.17.11",
+      "action": "upgrade",
+      "target": "4.17.21",
+      "command": [
+        "npm",
+        "install",
+        "lodash@4.17.21"
+      ],
+      "distance": "patch",
+      "clears": [
+        "GHSA-35jh-r3h4-6jhm"
+      ],
+      "used": "imported by your code",
+      "reason": "Clears GHSA-35jh-r3h4-6jhm (fixed in 4.17.21 per OSV), a patch bump from 4.17.11.",
+      "limitations": [
+        "Code impact not checked: whether your code uses a part of the package that changed is not checked.",
+        "Not tested: run your tests after upgrading."
+      ],
+      "gate": {
+        "rung": "advisory",
+        "authorization": "confirm",
+        "reasons": [
+          "A patch upgrade to a published version clears the advisory."
+        ]
+      },
+      "evidence": {
+        "action": "upgrade",
+        "direct": true,
+        "imported": true,
+        "scope": "prod",
+        "targetExists": true,
+        "distance": "patch"
+      }
+    },
+    {
+      "apply": false,
+      "package": "minimist",
+      "current": "1.2.0",
+      "action": "remove",
+      "command": [
+        "npm",
+        "uninstall",
+        "minimist"
+      ],
+      "clears": [
+        "GHSA-xvch-5gv4-984h"
+      ],
+      "used": "not imported by your code, removing it may clear this",
+      "reason": "Your code does not import it; removing it clears GHSA-xvch-5gv4-984h at no compatibility risk.",
+      "limitations": [
+        "Usage is heuristic: a dynamic import or a config-referenced loader can hide a real use, so confirm it is unused."
+      ],
+      "gate": {
+        "rung": "advisory",
+        "authorization": "confirm",
+        "reasons": [
+          "Removing an unused direct dependency clears its advisories with no compatibility surface."
+        ]
+      },
+      "evidence": {
+        "action": "remove",
+        "direct": true,
+        "imported": false,
+        "scope": "prod",
+        "targetExists": false,
+        "distance": ""
+      }
+    }
+  ]
+}

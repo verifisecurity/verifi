@@ -22,6 +22,8 @@ type analysis struct {
 	recs     []reason.Recommendation
 	imported map[string]bool // packages the project's own code imports
 	dbMeta   *osv.Meta       // cache freshness; nil when --db is used or unstamped
+	dbPath   string          // the advisory directory actually matched against
+	dbCache  bool            // true when that directory was the local cache, not a --db
 }
 
 // analyze runs the read-only pipeline for a project: resolve the dependencies,
@@ -72,7 +74,10 @@ func analyze(path, dbDir string, offline bool) (*analysis, error) {
 	}
 	cands := candidate.Compute(findings, exists, removable)
 	recs := reason.Explain(cands)
-	return &analysis{inv: inv, findings: findings, cands: cands, recs: recs, imported: imported, dbMeta: dbMeta}, nil
+	return &analysis{
+		inv: inv, findings: findings, cands: cands, recs: recs,
+		imported: imported, dbMeta: dbMeta, dbPath: dbDir, dbCache: usedCache,
+	}, nil
 }
 
 // registryExists returns a predicate that reports whether a package version is

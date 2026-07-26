@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/verifisecurity/verifi/internal/command"
+	"github.com/verifisecurity/verifi/internal/plan"
 )
 
 var update = flag.Bool("update", false, "regenerate golden files")
@@ -47,6 +48,21 @@ func capture(t *testing.T, f func() error) string {
 	return out
 }
 
+// scrub replaces the absolute paths in captured output with placeholders. The
+// plan hint names the plan file and the workspace, and the plan's directory is a
+// digest of the workspace's absolute path, so all of it differs per machine and
+// none of it can sit in a golden file. Longest match first.
+func scrub(t *testing.T, out, home string) string {
+	t.Helper()
+	abs, err := filepath.Abs(fixture())
+	if err != nil {
+		t.Fatal(err)
+	}
+	out = strings.ReplaceAll(out, plan.Path(home, fixture()), "<plan>")
+	out = strings.ReplaceAll(out, home, "<home>")
+	return strings.ReplaceAll(out, abs, "<workspace>")
+}
+
 func checkGolden(t *testing.T, name, got string) {
 	t.Helper()
 	path := filepath.Join(fixture(), name)
@@ -69,17 +85,19 @@ func checkGolden(t *testing.T, name, got string) {
 // lockfile, match the fixture OSV database, reason about each fix, render it.
 // Regenerate with -update.
 func TestScan_Golden(t *testing.T) {
+	home := isolate(t)
 	got := capture(t, func() error {
 		return runScan([]string{fixture(), "--db", fixtureDB(), "--offline"})
 	})
-	checkGolden(t, "expected.scan.txt", got)
+	checkGolden(t, "expected.scan.txt", scrub(t, got, home))
 }
 
 func TestScan_JSON_Golden(t *testing.T) {
+	home := isolate(t)
 	got := capture(t, func() error {
 		return runScan([]string{fixture(), "--db", fixtureDB(), "--offline", "--json"})
 	})
-	checkGolden(t, "expected.scan.json", got)
+	checkGolden(t, "expected.scan.json", scrub(t, got, home))
 }
 
 func TestScan_SBOM_Golden(t *testing.T) {
