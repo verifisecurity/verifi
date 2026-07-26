@@ -20,6 +20,7 @@ type analysis struct {
 	findings []finding.Finding
 	recs     []reason.Recommendation
 	imported map[string]bool // packages the project's own code imports
+	dbMeta   *osv.Meta       // cache freshness; nil when --db is used or unstamped
 }
 
 // analyze runs the read-only pipeline for a project: resolve the dependencies,
@@ -35,7 +36,10 @@ func analyze(path, dbDir string, offline bool) (*analysis, error) {
 	if err != nil {
 		return nil, err
 	}
-	if dbDir == "" {
+	// Only the default cache carries a freshness stamp; a user-supplied --db is
+	// their own directory, so we do not second-guess its age.
+	usedCache := dbDir == ""
+	if usedCache {
 		dbDir = filepath.Join(cacheRoot(), inv.Ecosystem)
 	}
 	db, err := osv.Load(dbDir)
@@ -43,6 +47,13 @@ func analyze(path, dbDir string, offline bool) (*analysis, error) {
 		return nil, fmt.Errorf("no OSV database at %s\nrun `verifi update` to download it, or pass --db <dir>", dbDir)
 	}
 	findings := db.Match(inv)
+
+	var dbMeta *osv.Meta
+	if usedCache {
+		if m, err := osv.ReadMeta(cacheRoot(), inv.Ecosystem); err == nil {
+			dbMeta = &m
+		}
+	}
 
 	// Best-effort usage scan: it drives the remove recommendation and the view.
 	imported, _ := usagescan.Scan(path)
@@ -59,7 +70,7 @@ func analyze(path, dbDir string, offline bool) (*analysis, error) {
 		exists = registryExists()
 	}
 	recs := reason.Explain(candidate.Compute(findings, exists, removable))
-	return &analysis{inv: inv, findings: findings, recs: recs, imported: imported}, nil
+	return &analysis{inv: inv, findings: findings, recs: recs, imported: imported, dbMeta: dbMeta}, nil
 }
 
 // registryExists returns a predicate that reports whether a package version is

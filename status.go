@@ -8,6 +8,7 @@ import (
 
 	"github.com/verifisecurity/verifi/internal/finding"
 	"github.com/verifisecurity/verifi/internal/inventory"
+	"github.com/verifisecurity/verifi/internal/osv"
 	"github.com/verifisecurity/verifi/internal/reason"
 )
 
@@ -57,12 +58,15 @@ func runStatus(args []string) error {
 		return nil
 	}
 
-	printStatus(res.inv, res.findings, res.recs, res.imported)
+	printStatus(res.inv, res.findings, res.recs, res.imported, res.dbMeta)
 	return nil
 }
 
-func printStatus(inv *inventory.Inventory, findings []finding.Finding, recs []reason.Recommendation, imported map[string]bool) {
+func printStatus(inv *inventory.Inventory, findings []finding.Finding, recs []reason.Recommendation, imported map[string]bool, dbMeta *osv.Meta) {
 	fmt.Printf("%s@%s (%s)\n", inv.Root.Name, inv.Root.Version, inv.Ecosystem)
+	if line := freshnessLine(dbMeta); line != "" {
+		fmt.Println(line)
+	}
 	if len(findings) == 0 {
 		fmt.Printf("%d packages scanned, none vulnerable.\n", len(inv.Packages))
 		return

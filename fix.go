@@ -43,6 +43,9 @@ func runFix(args []string) error {
 	if err != nil {
 		return err
 	}
+	if w := staleWarning(res.dbMeta); w != "" {
+		fmt.Fprintln(os.Stderr, w)
+	}
 	plan := fix.Build(res.recs)
 
 	if plan.Empty() {

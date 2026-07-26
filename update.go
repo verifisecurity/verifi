@@ -32,6 +32,9 @@ func runUpdate(args []string) error {
 	if err != nil {
 		return err
 	}
+	if err := osv.WriteMeta(root, ecosystem, n); err != nil {
+		return fmt.Errorf("stamp cache: %w", err)
+	}
 	fmt.Printf("Stored %d advisories in %s\n", n, filepath.Join(root, ecosystem))
 	return nil
 }
