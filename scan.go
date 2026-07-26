@@ -12,21 +12,30 @@ import (
 	"github.com/verifisecurity/verifi/internal/reason"
 )
 
-// runStatus implements `verifi status <path> [--json] [--db <dir>] [--offline]`:
-// resolve the project, match it against a local OSV database, and print what
-// needs fixing with a reasoned fix per package. Read-only. npm for now. By
-// default it checks the registry so it only recommends versions that exist;
-// --offline skips that and trusts OSV's fixed versions.
-func runStatus(args []string) error {
+// runScan implements `verifi scan <path>`: the one read-only command. It
+// resolves the project's dependency tree, matches it against the OSV database,
+// and reports what needs fixing with a reasoned fix per package. npm for now.
+//
+// The tree views (--inventory, --sbom) need no advisory database and never
+// touch it. --json is a modifier on whichever view is selected, not a view of
+// its own. By default the scan checks the registry so it only recommends
+// versions that exist; --offline skips that and trusts OSV's fixed versions.
+func runScan(args []string) error {
 	path, dbDir := "", ""
-	asJSON, offline := false, false
+	asJSON, asSBOM, asInventory, offline, download := false, false, false, false, false
 	for i := 0; i < len(args); i++ {
 		a := args[i]
 		switch a {
 		case "--json":
 			asJSON = true
+		case "--sbom":
+			asSBOM = true
+		case "--inventory":
+			asInventory = true
 		case "--offline":
 			offline = true
+		case "--download":
+			download = true
 		case "--db":
 			if i+1 >= len(args) {
 				return fmt.Errorf("--db needs a directory")
@@ -43,6 +52,45 @@ func runStatus(args []string) error {
 	if path == "" {
 		path = "."
 	}
+	if download && dbDir != "" {
+		return fmt.Errorf("--download fetches into the local cache, so it cannot be combined with --db")
+	}
+
+	// The tree views describe what you depend on, not what is wrong with it, so
+	// they resolve the lockfile and stop. No advisory database required.
+	if asSBOM || asInventory {
+		inv, err := loadInventory(path)
+		if err != nil {
+			return err
+		}
+		switch {
+		case asSBOM:
+			out, err := inv.ToCycloneDX()
+			if err != nil {
+				return err
+			}
+			fmt.Println(string(out))
+		case asJSON:
+			out, err := json.MarshalIndent(inv, "", "  ")
+			if err != nil {
+				return err
+			}
+			fmt.Println(string(out))
+		default:
+			printInventory(inv)
+		}
+		return nil
+	}
+
+	if download {
+		inv, err := loadInventory(path)
+		if err != nil {
+			return err
+		}
+		if err := downloadDB(inv.Ecosystem); err != nil {
+			return err
+		}
+	}
 
 	res, err := analyze(path, dbDir, offline)
 	if err != nil {
@@ -58,11 +106,11 @@ func runStatus(args []string) error {
 		return nil
 	}
 
-	printStatus(res.inv, res.findings, res.recs, res.imported, res.dbMeta)
+	printFindings(res.inv, res.findings, res.recs, res.imported, res.dbMeta)
 	return nil
 }
 
-func printStatus(inv *inventory.Inventory, findings []finding.Finding, recs []reason.Recommendation, imported map[string]bool, dbMeta *osv.Meta) {
+func printFindings(inv *inventory.Inventory, findings []finding.Finding, recs []reason.Recommendation, imported map[string]bool, dbMeta *osv.Meta) {
 	fmt.Printf("%s@%s (%s)\n", inv.Root.Name, inv.Root.Version, inv.Ecosystem)
 	if line := freshnessLine(dbMeta); line != "" {
 		fmt.Println(line)

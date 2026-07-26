@@ -40,20 +40,8 @@ func main() {
 	case "version", "-v", "--version":
 		fmt.Printf("verifi %s (%s), built %s\n", version, commit, date)
 
-	case "inspect":
-		if err := runInspect(args[1:]); err != nil {
-			fmt.Fprintln(os.Stderr, "verifi:", err)
-			os.Exit(1)
-		}
-
-	case "update":
-		if err := runUpdate(args[1:]); err != nil {
-			fmt.Fprintln(os.Stderr, "verifi:", err)
-			os.Exit(1)
-		}
-
-	case "status":
-		if err := runStatus(args[1:]); err != nil {
+	case "scan":
+		if err := runScan(args[1:]); err != nil {
 			fmt.Fprintln(os.Stderr, "verifi:", err)
 			os.Exit(1)
 		}
@@ -63,10 +51,6 @@ func main() {
 			fmt.Fprintln(os.Stderr, "verifi:", err)
 			os.Exit(1)
 		}
-
-	case "scan":
-		fmt.Printf("`verifi %s` is coming in a future release. This is a pre-release build.\n", cmd)
-		fmt.Println("Follow along: https://github.com/verifisecurity/verifi")
 
 	case "help", "-h", "--help":
 		usage()

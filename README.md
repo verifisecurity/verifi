@@ -38,11 +38,18 @@ build from [Releases](https://github.com/verifisecurity/verifi/releases).
 
 ## Usage
 
-Download the advisory database once, then scan a project:
+Scan a project:
 
 ```sh
-verifi update
-verifi status path/to/project
+verifi scan path/to/project
+```
+
+The first scan needs the OSV advisory database. If it is not on the machine yet,
+`scan` says so, and `--download` fetches it into `~/.verifi/osv` for every project
+to share:
+
+```sh
+verifi scan path/to/project --download
 ```
 
 You get, per vulnerable package, whether your code imports it, the version to upgrade to, what
@@ -50,12 +57,10 @@ that clears, and the limits of what has been checked.
 
 <!-- BEGIN COMMANDS -->
 ```
-verifi inspect <path>  Resolve the project's dependencies (--json, --sbom)
-verifi update          Download the OSV database into the local cache
-verifi status <path>   Show what is vulnerable and the fix (--json, --db, --offline)
-verifi fix <path>      Apply the recommended fix, or preview it (--apply, --db, --offline)
-verifi version         Print the version
-verifi help            Show this help
+verifi scan <path>  Report what is vulnerable and the fix for each one
+verifi fix <path>   Apply the recommended fix, or preview it (--apply, --db, --offline)
+verifi version      Print the version
+verifi help         Show this help
 ```
 <!-- END COMMANDS -->
 

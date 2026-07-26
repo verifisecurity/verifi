@@ -27,34 +27,18 @@ type Command struct {
 // the splash, so "welcome" is not a command, it is the default.
 var All = []Command{
 	{
-		Name: "inspect", Args: "<path>", Ready: true,
-		Summary: "Resolve the project's dependencies (--json, --sbom)",
-		Long:    "Resolves a project's full dependency tree, direct and transitive, into a structured inventory. It reads the lockfile and does not install or run anything. Use it to see what you actually depend on, or to export a CycloneDX SBOM.",
+		Name: "scan", Args: "<path>", Ready: true,
+		Summary: "Report what is vulnerable and the fix for each one",
+		Long:    "Resolves a project's full dependency tree and matches it against the OSV advisory database, then reports for each vulnerable package whether your code imports it, the version to move to, what that clears, and the honest limits of what has been checked. Read-only, it never changes your project. Use --inventory or --sbom to describe the tree without looking for advisories; neither needs a database. The first scan needs the advisory database, which --download fetches into ~/.verifi/osv.",
 		Flags: []Flag{
-			{"--json", "Print the inventory as JSON"},
-			{"--sbom", "Print a CycloneDX SBOM"},
-		},
-		Example: []string{"inspect", "testdata/npm/vuln"},
-	},
-	{
-		Name: "update", Ready: true,
-		Summary: "Download the OSV database into the local cache",
-		Long:    "Downloads the OSV advisory database for an ecosystem into a local cache (~/.verifi/osv). Run it once, from anywhere; it is machine-global, not per-project. After it, status matches offline. Refresh it occasionally to pick up new advisories.",
-		Flags: []Flag{
-			{"--ecosystem <name>", "Ecosystem to download (default npm)"},
-		},
-		Example: nil, // network download, not captured
-	},
-	{
-		Name: "status", Args: "<path>", Ready: true,
-		Summary: "Show what is vulnerable and the fix (--json, --db, --offline)",
-		Long:    "Scans a project against the OSV database and prints, for each vulnerable package, whether your code imports it, the version to upgrade to, what that clears, and the honest limits of what has been checked. Read-only, it never changes your project. Run `verifi update` first.",
-		Flags: []Flag{
-			{"--json", "Print findings as JSON"},
+			{"--json", "Print the selected view as JSON"},
+			{"--inventory", "Report the dependency tree instead of the findings"},
+			{"--sbom", "Print the dependency tree as a CycloneDX SBOM"},
+			{"--download", "Fetch the OSV database into the local cache first"},
 			{"--db <dir>", "Use a specific OSV database directory"},
 			{"--offline", "Skip the registry check for published versions"},
 		},
-		Example: []string{"status", "testdata/npm/vuln", "--db", "testdata/osv", "--offline"},
+		Example: []string{"scan", "testdata/npm/vuln", "--db", "testdata/osv", "--offline"},
 	},
 	{
 		Name: "fix", Args: "<path>", Ready: true,

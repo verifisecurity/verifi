@@ -45,7 +45,7 @@ func analyze(path, dbDir string, offline bool) (*analysis, error) {
 	}
 	db, err := osv.Load(dbDir)
 	if err != nil {
-		return nil, fmt.Errorf("no OSV database at %s\nrun `verifi update` to download it, or pass --db <dir>", dbDir)
+		return nil, fmt.Errorf("no OSV database at %s\nrun `verifi scan %s --download` to fetch it, or pass --db <dir>", dbDir, path)
 	}
 	findings := db.Match(inv)
 

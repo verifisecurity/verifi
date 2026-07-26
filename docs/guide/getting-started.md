@@ -16,29 +16,31 @@ curl -fsSL https://raw.githubusercontent.com/verifisecurity/verifi/main/install.
 
 Or download a build from [Releases](https://github.com/verifisecurity/verifi/releases).
 
-## Download the advisory database
-
-Verifi matches your dependencies against the OSV advisory database. Download it
-once; it is stored in `~/.verifi/osv` and shared by every project on the machine.
-
-```sh
-verifi update
-```
-
 ## Scan a project
 
-Point `status` at a project with a lockfile:
+Point `scan` at a project with a lockfile:
 
 ```sh
-verifi status path/to/project
+verifi scan path/to/project
 ```
 
 You get, for each vulnerable package, whether your code imports it, the version
 to upgrade to, what that clears, and the limits of what has been checked. Nothing
-is written to your project; `status` is read-only.
+is written to your project; `scan` is read-only.
+
+The first scan needs the OSV advisory database, which is stored in `~/.verifi/osv`
+and shared by every project on the machine. If it is not there yet, `scan` tells
+you so and `--download` fetches it:
+
+```sh
+verifi scan path/to/project --download
+```
+
+That download is large and takes a few minutes, once. Later scans reuse the cache
+and run offline.
 
 ## What next
 
-- Understand the output: [reading status](../commands/status.md#reading-the-output).
+- Understand the output: [reading scan](../commands/scan.md#reading-the-output).
 - Understand the confidence rung on each fix: [confidence](../concepts/confidence.md).
 - Turn a finding into a change: [fixing vulnerabilities](fixing.md).

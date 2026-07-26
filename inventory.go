@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -9,54 +8,8 @@ import (
 	"github.com/verifisecurity/verifi/internal/inventory"
 )
 
-// runInspect implements `verifi inspect <path> [--json] [--sbom]`: resolve the
-// project's dependency tree and print it. Read-only. npm for now.
-func runInspect(args []string) error {
-	path := ""
-	asJSON, asSBOM := false, false
-	for _, a := range args {
-		switch a {
-		case "--json":
-			asJSON = true
-		case "--sbom":
-			asSBOM = true
-		default:
-			if len(a) > 0 && a[0] == '-' {
-				return fmt.Errorf("unknown flag %q", a)
-			}
-			path = a
-		}
-	}
-	if path == "" {
-		path = "."
-	}
-
-	inv, err := loadInventory(path)
-	if err != nil {
-		return err
-	}
-
-	switch {
-	case asSBOM:
-		out, err := inv.ToCycloneDX()
-		if err != nil {
-			return err
-		}
-		fmt.Println(string(out))
-	case asJSON:
-		out, err := json.MarshalIndent(inv, "", "  ")
-		if err != nil {
-			return err
-		}
-		fmt.Println(string(out))
-	default:
-		printInventory(inv)
-	}
-	return nil
-}
-
 // loadInventory reads a project's lockfile and resolves it to an inventory.
-// Shared by `inspect` and the MCP inspect tool so they cannot drift. npm for now.
+// npm for now.
 func loadInventory(path string) (*inventory.Inventory, error) {
 	lockPath := filepath.Join(path, "package-lock.json")
 	data, err := os.ReadFile(lockPath)

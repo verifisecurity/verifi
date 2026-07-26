@@ -6,7 +6,7 @@ sidebar_position: 2
 
 # Usage signal
 
-`verifi status` scans your project's own source and marks each vulnerable
+`verifi scan` scans your project's own source and marks each vulnerable
 package by how your code relates to it:
 
 - **imported by your code**: your source imports it directly. This is where a

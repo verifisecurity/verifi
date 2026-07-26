@@ -6,7 +6,7 @@ sidebar_position: 2
 
 # Fixing vulnerabilities
 
-`verifi status` does not just tell you a package is vulnerable, it tells you the
+`verifi scan` does not just tell you a package is vulnerable, it tells you the
 fix. For each vulnerable package it recommends a corrective action:
 
 - **Upgrade** to the nearest safe version. The common case. Verifi picks the
@@ -37,7 +37,7 @@ verifi fix path/to/project --apply
 ```
 
 `verifi fix` handles both an upgrade and a removal, whichever status recommends
-for each package. Then re-run `verifi status` to confirm it is clear, and run
+for each package. Then re-run `verifi scan` to confirm it is clear, and run
 your tests. See [verifi fix](../commands/fix.md) for details.
 
 Opening the change as a pull request you review is on the way.

@@ -8,24 +8,10 @@ import (
 	"github.com/verifisecurity/verifi/internal/osv"
 )
 
-// runUpdate implements `verifi update [--ecosystem npm]`: download the OSV
-// advisory database into the local cache so `verifi status` works offline with
-// no --db flag.
-func runUpdate(args []string) error {
-	ecosystem := "npm"
-	for i := 0; i < len(args); i++ {
-		switch args[i] {
-		case "--ecosystem":
-			if i+1 >= len(args) {
-				return fmt.Errorf("--ecosystem needs a value")
-			}
-			i++
-			ecosystem = args[i]
-		default:
-			return fmt.Errorf("unknown argument %q", args[i])
-		}
-	}
-
+// downloadDB fetches the OSV advisory database for an ecosystem into the local
+// cache, so matching runs offline with no --db flag. It backs `verifi scan
+// --download`; the ecosystem comes from the project's lockfile, not a flag.
+func downloadDB(ecosystem string) error {
 	root := cacheRoot()
 	fmt.Printf("Downloading the OSV database for %s ...\n", ecosystem)
 	n, err := osv.Fetch(ecosystem, root)

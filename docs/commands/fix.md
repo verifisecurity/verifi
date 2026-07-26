@@ -6,7 +6,7 @@ sidebar_position: 4
 
 # verifi fix
 
-`verifi fix` applies the fix that [`verifi status`](status.md) recommends:
+`verifi fix` applies the fix that [`verifi scan`](scan.md) recommends:
 upgrade a vulnerable package to a safe version, or remove a direct dependency
 your code never imports. It **previews by default and writes nothing**; you opt
 in to the change with `--apply`, which runs the package manager for you.
@@ -63,6 +63,6 @@ verifi fix path/to/project --apply
 
 It runs the package manager for each fix (`npm install <pkg>@<version>` to
 upgrade, `npm uninstall <pkg>` to remove), which updates both your manifest and
-lockfile. Then re-run `verifi status` to confirm, and run your tests.
+lockfile. Then re-run `verifi scan` to confirm, and run your tests.
 
 Opening the change as a pull request you review is on the way.
