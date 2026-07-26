@@ -13,8 +13,9 @@ tells you the version to move to, what it clears, and what it has not checked. Y
 short, honest list of fixes instead of a backlog you are afraid to touch. It is not another
 scanner. Its job starts where detection stops.
 
-> **Status: v0.1.0, pre-1.0.** The read-only core is here: it scans a project and reasons
-> about each fix. The command surface may still change before 1.0. See
+> **Status: pre-1.0.** `verifi scan` reports what is vulnerable and writes a plan; you mark
+> the fixes you want and `verifi fix` runs those. The command surface may still change before
+> 1.0. For the current version, see
 > [Releases](https://github.com/verifisecurity/verifi/releases).
 
 ## Install

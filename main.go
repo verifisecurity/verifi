@@ -29,6 +29,9 @@ func main() {
 	switch cmd {
 	case "", "--static", "--loop":
 		// No command (optionally with a splash flag): say hello with the splash.
+		// It renders the same version this binary reports, so the banner and
+		// `verifi version` cannot disagree.
+		splash.Version = version
 		loop := hasFlag(args, "--loop")
 		static := hasFlag(args, "--static")
 		if static {

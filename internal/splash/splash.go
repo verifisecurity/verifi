@@ -1,6 +1,6 @@
 // Package splash renders the `verifi` welcome screen: muted boxes of varying
 // sizes fall down a blackish gradient (the website hero motif), then fade out
-// as the solid VERIFI wordmark and a "coming soon · beta" line settle in.
+// as the solid VERIFI wordmark and a build line settle in.
 //
 // Stdlib only, no dependencies, by design: this is a security tool's own CLI,
 // so keeping its dependency surface at zero is a feature, not a limitation.
@@ -49,6 +49,26 @@ var (
 )
 
 // ------------------------------------------------------------------
+
+// Version is the release this binary was built as. main sets it from the
+// build-time ldflag, so it is the same value `verifi version` prints and the
+// banner cannot advertise a different release from the command.
+var Version = "dev"
+
+// tagline is the line under the wordmark. It reports the build rather than
+// making a promise, because a promise goes stale: the hardcoded
+// "coming soon · beta" it replaces was still there two releases after the tool
+// shipped and was installable.
+func tagline() string {
+	v := strings.TrimSpace(Version)
+	if v == "" || v == "dev" {
+		return "dev build · pre-1.0"
+	}
+	if !strings.HasPrefix(v, "v") {
+		v = "v" + v
+	}
+	return v + " · pre-1.0"
+}
 
 // Show renders the welcome. It animates when stdout is a real terminal;
 // otherwise (piped, CI) it prints the static banner. Pass loop to replay.
@@ -186,7 +206,7 @@ func renderFrame(boxes []box, blockAlpha, wordAlpha float64) string {
 			bg := grid[py][px].bg
 			grid[py][px] = cell{'█', mix(bg, inkWord, wordAlpha), bg}
 		}
-		drawText(grid, oy+7, center("coming soon · beta", canvasW), mix(bgAt(oy+7), inkTeal, wordAlpha))
+		drawText(grid, oy+7, center(tagline(), canvasW), mix(bgAt(oy+7), inkTeal, wordAlpha))
 		drawText(grid, oy+9, center("github.com/verifisecurity/verifi", canvasW), mix(bgAt(oy+9), inkMuted, wordAlpha*0.9))
 	}
 

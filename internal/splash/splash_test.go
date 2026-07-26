@@ -8,12 +8,14 @@ import (
 
 var ansi = regexp.MustCompile("\033\\[[0-9;]*[a-zA-Z]")
 
-// The static banner should render the settled wordmark and the subtitle.
+// The static banner should render the settled wordmark and the subtitle. The
+// subtitle is asserted through tagline() rather than as a literal, so it tracks
+// the build instead of pinning a string that will go stale.
 // Cells are wrapped in per-cell ANSI codes, so strip those before asserting.
 func TestStaticFrameContainsWordmarkAndSubtitle(t *testing.T) {
 	frame := ansi.ReplaceAllString(renderFrame(nil, 0, 1), "")
-	if !strings.Contains(frame, "coming soon · beta") {
-		t.Error("static frame is missing the subtitle")
+	if !strings.Contains(frame, tagline()) {
+		t.Errorf("static frame is missing the subtitle %q", tagline())
 	}
 	if strings.Count(frame, "█") == 0 {
 		t.Error("static frame has no wordmark blocks")
