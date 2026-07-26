@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/verifisecurity/verifi/internal/capability"
 	"github.com/verifisecurity/verifi/internal/command"
 	"github.com/verifisecurity/verifi/internal/ecosystem"
 )
@@ -39,7 +40,42 @@ func Generate(readmePath, docsDir string, examples map[string]string) error {
 			return err
 		}
 	}
-	return nil
+	// The editor guide carries the capability list, generated from the registry
+	// so it never goes stale. Skipped if the page is not authored.
+	return updateGuidePage(filepath.Join(docsDir, "guide", "editor.md"))
+}
+
+// updateGuidePage fills the CAPABILITIES block of a guide page from the
+// capability registry. A missing page or block is left alone.
+func updateGuidePage(path string) error {
+	data, err := os.ReadFile(path)
+	if os.IsNotExist(err) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	out, err := replaceBlock(string(data), "CAPABILITIES", capabilitiesBlock(), false)
+	if err != nil {
+		return fmt.Errorf("%s: %w", path, err)
+	}
+	return writeIfChanged(path, data, out)
+}
+
+func capabilitiesBlock() string {
+	w := 0
+	for _, c := range capability.All {
+		if len(c.Name) > w {
+			w = len(c.Name)
+		}
+	}
+	var b strings.Builder
+	b.WriteString("```\n")
+	for _, c := range capability.All {
+		fmt.Fprintf(&b, "%-*s  %s\n", w, c.Name, c.Summary)
+	}
+	b.WriteString("```")
+	return b.String()
 }
 
 func updateReadme(path string) error {

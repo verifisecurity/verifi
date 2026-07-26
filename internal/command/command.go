@@ -68,6 +68,12 @@ var All = []Command{
 		Example: []string{"fix", "testdata/npm/vuln", "--db", "testdata/osv", "--offline"},
 	},
 	{
+		Name: "mcp", Ready: true,
+		Summary: "Serve the tools over MCP on stdio, for your editor",
+		Long:    "Serves verifi's read-only tools (scan_workspace, list_dependencies) over the Model Context Protocol on stdio, so an editor or agent can call them. Each tool runs the same core as the matching command, so they cannot drift. Wire it into an editor with `verifi mcp install <client>` (vscode, cursor, claude), or point an MCP config at `verifi mcp` by hand. No network and no daemon; the editor starts and stops it.",
+		Example: nil, // a long-lived stdio server, not a captured one-shot
+	},
+	{
 		Name: "version", Ready: true,
 		Summary: "Print the version",
 		Long:    "Prints the CLI version, commit, and build date.",
