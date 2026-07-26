@@ -83,6 +83,10 @@ func runFix(args []string) error {
 	if len(run) == 0 {
 		return nil
 	}
+	// Say what is old about the plan before acting on it, not after.
+	for _, w := range planWarnings(p, now()) {
+		fmt.Fprintln(os.Stderr, "verifi:", w)
+	}
 	return applyCandidates(os.Stdout, os.Stderr, path, run)
 }
 
