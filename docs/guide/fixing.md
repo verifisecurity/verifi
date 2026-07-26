@@ -22,22 +22,26 @@ first.
 
 ## Applying a fix
 
-`verifi fix` applies the recommendation for you. It previews by default and
-writes nothing:
+Scanning writes a plan and marks nothing in it. You decide what to apply by
+editing that file, then `verifi fix` runs what you marked:
 
 ```sh
-verifi fix path/to/project
+verifi scan path/to/project     # writes the plan, tells you where it is
+$EDITOR ~/.verifi/projects/<project>/candidates.json
+verifi fix path/to/project      # runs only what you marked
 ```
 
-Add `--apply` to make the change; it runs the package manager, which updates both
-your manifest and lockfile:
+Set `"apply": true` on the fixes you want. With nothing marked, `fix` writes
+nothing and says so, which means running it by accident is harmless.
 
-```sh
-verifi fix path/to/project --apply
-```
+The plan is the preview, so there is no preview flag. Unlike terminal output it
+is a real artifact: you can read it, diff it, and keep it, and `scan --out` can
+write it into the repository if you would rather review it like any other change.
 
-`verifi fix` handles both an upgrade and a removal, whichever status recommends
-for each package. Then re-run `verifi scan` to confirm it is clear, and run
-your tests. See [verifi fix](../commands/fix.md) for details.
+`verifi fix` handles both an upgrade and a removal, whichever the scan
+recommends for each package. It runs the package manager rather than editing
+your lockfile. Then re-run `verifi scan` to confirm it is clear, and run your
+tests. See [verifi fix](../commands/fix.md) for details, including why a
+transitive dependency can only be proposed for now.
 
 Opening the change as a pull request you review is on the way.

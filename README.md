@@ -58,7 +58,7 @@ that clears, and the limits of what has been checked.
 <!-- BEGIN COMMANDS -->
 ```
 verifi scan <path>  Report what is vulnerable and the fix for each one
-verifi fix <path>   Apply the recommended fix, or preview it (--apply, --db, --offline)
+verifi fix <path>   Apply the fixes you marked in the plan
 verifi version      Print the version
 verifi help         Show this help
 ```

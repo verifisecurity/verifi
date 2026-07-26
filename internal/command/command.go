@@ -43,14 +43,12 @@ var All = []Command{
 	},
 	{
 		Name: "fix", Args: "<path>", Ready: true,
-		Summary: "Apply the recommended fix, or preview it (--apply, --db, --offline)",
-		Long:    "Applies the fix that status recommends: upgrade to a safe version, or remove a direct dependency your code never imports. It previews by default and writes nothing; --apply runs the package manager to make the change. At today's advisory confidence, applying is an explicit opt-in, never silent.",
+		Summary: "Apply the fixes you marked in the plan",
+		Long:    "Runs the fixes you marked in the plan that `verifi scan` wrote: upgrade to a safe version, or remove a direct dependency your code never imports. It analyses nothing of its own, so what runs is exactly what you reviewed. Two things must agree before anything is written: the gate authorised the fix, and you marked it with \"apply\": true. A fix the gate can only propose is reported with the reason instead of being run. There is no preview flag because the plan is the preview.",
 		Flags: []Flag{
-			{"--apply", "Write the change via the package manager (default is preview)"},
-			{"--db <dir>", "Use a specific OSV database directory"},
-			{"--offline", "Skip the registry check for published versions"},
+			{"--plan <file>", "Read the plan from here instead of the default location"},
 		},
-		Example: []string{"fix", "testdata/npm/vuln", "--db", "testdata/osv", "--offline"},
+		Example: nil, // runs the package manager against a real project
 	},
 	{
 		Name: "version", Ready: true,

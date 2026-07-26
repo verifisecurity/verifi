@@ -6,29 +6,32 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/verifisecurity/verifi/internal/fix"
+	"github.com/verifisecurity/verifi/internal/gate"
+	"github.com/verifisecurity/verifi/internal/plan"
 )
 
-// runFix implements `verifi fix <path> [--apply] [--db <dir>] [--offline]`:
-// build the fix plan from what status recommends, and preview it (default) or
-// apply it. Previewing writes nothing. Applying runs the package manager, and
-// at today's advisory confidence it is an explicit opt-in, never silent.
+// runFix implements `verifi fix <path> [--plan <file>]`: read the plan a scan
+// wrote and run the fixes a human marked in it.
+//
+// It analyses nothing. Everything it needs is already in the plan, including the
+// exact command per package, so what runs is what you reviewed rather than a
+// fresh decision made at apply time. That is also why there is no preview flag:
+// the plan is the preview.
+//
+// Two things must agree before anything is written. The gate has to have
+// authorised the fix, and a human has to have marked it. Either alone does
+// nothing.
 func runFix(args []string) error {
-	path, dbDir := "", ""
-	apply, offline := false, false
+	path, planPath := "", ""
 	for i := 0; i < len(args); i++ {
 		a := args[i]
 		switch a {
-		case "--apply":
-			apply = true
-		case "--offline":
-			offline = true
-		case "--db":
+		case "--plan":
 			if i+1 >= len(args) {
-				return fmt.Errorf("--db needs a directory")
+				return fmt.Errorf("--plan needs a file path")
 			}
 			i++
-			dbDir = args[i]
+			planPath = args[i]
 		default:
 			if len(a) > 0 && a[0] == '-' {
 				return fmt.Errorf("unknown flag %q", a)
@@ -39,72 +42,87 @@ func runFix(args []string) error {
 	if path == "" {
 		path = "."
 	}
+	if planPath == "" {
+		planPath = plan.Path(verifiHome(), path)
+	}
 
-	res, err := analyze(path, dbDir, offline)
+	p, err := plan.Read(planPath)
+	if os.IsNotExist(err) {
+		return fmt.Errorf("no plan at %s\nrun `verifi scan %s` first", planPath, path)
+	}
 	if err != nil {
 		return err
 	}
-	if w := staleWarning(res.dbMeta); w != "" {
-		fmt.Fprintln(os.Stderr, w)
-	}
-	plan := fix.Build(res.recs)
 
-	if plan.Empty() {
-		fmt.Println("Nothing to fix.")
-		if len(plan.Skipped) > 0 {
-			fmt.Printf("%d vulnerable package(s) have no applicable fix yet.\n", len(plan.Skipped))
+	// Marked by a human, then split on what the gate allows. A fix the gate only
+	// proposes is reported with its reason rather than run: marking it says you
+	// want it, but the gate is saying verifi cannot deliver it safely yet.
+	var run, blocked []plan.Candidate
+	for _, c := range p.Selected() {
+		if c.Gate.Authorization == gate.Confirm {
+			run = append(run, c)
+		} else {
+			blocked = append(blocked, c)
+		}
+	}
+
+	if len(run) == 0 && len(blocked) == 0 {
+		fmt.Printf("Nothing marked to apply in %s\n", planPath)
+		if n := actionableCount(p); n > 0 {
+			fmt.Printf("It has %d fix(es) available. Set \"apply\": true on the ones you want, then run this again.\n", n)
 		}
 		return nil
 	}
 
-	if !apply {
-		printPlan(plan)
+	for _, c := range blocked {
+		fmt.Printf("Skipping %s: marked, but verifi can only propose this one.\n", c.Package)
+		for _, r := range c.Gate.Reasons {
+			fmt.Printf("   %s\n", r)
+		}
+	}
+	if len(run) == 0 {
 		return nil
 	}
-	return applyPlan(path, plan)
+	return applyCandidates(os.Stdout, os.Stderr, path, run)
 }
 
-func printPlan(plan fix.Plan) {
-	fmt.Printf("Planned fixes (%d). Nothing is written without --apply.\n\n", len(plan.Actions))
-	for _, a := range plan.Actions {
-		fmt.Printf("  %s\n", actionLine(a))
-		fmt.Printf("      %s\n", a.Reason)
-		fmt.Printf("      $ %s\n\n", join(a.Command))
+func actionableCount(p plan.Plan) int {
+	n := 0
+	for _, c := range p.Candidates {
+		if c.Actionable() {
+			n++
+		}
 	}
-	if len(plan.Skipped) > 0 {
-		fmt.Printf("No applicable fix yet: %s\n\n", join(plan.Skipped))
-	}
-	fmt.Println("Apply with:  verifi fix <path> --apply")
+	return n
 }
 
-func actionLine(a fix.Action) string {
-	if a.Kind == "remove" {
-		return "remove " + a.Name
-	}
-	return fmt.Sprintf("upgrade %s: %s -> %s", a.Name, a.From, a.To)
-}
-
-func applyPlan(path string, plan fix.Plan) error {
-	return applyPlanTo(os.Stdout, os.Stderr, path, plan)
-}
-
-// applyPlanTo runs each action's package-manager command in path, streaming
-// output to out and errw. It is the shared apply core, taking writers so a
-// caller can capture the result instead of streaming it to the terminal. It
-// writes to the project; the caller decides whether that is allowed.
-func applyPlanTo(out, errw io.Writer, path string, plan fix.Plan) error {
-	for _, a := range plan.Actions {
-		fmt.Fprintf(out, "%s\n  $ %s\n", actionLine(a), join(a.Command))
-		cmd := exec.Command(a.Command[0], a.Command[1:]...)
+// applyCandidates runs each candidate's recorded package-manager command in the
+// workspace, streaming output. It takes writers so a caller can capture the run
+// instead of streaming it. It writes to the project; everything that decides
+// whether that is allowed happened before this point.
+func applyCandidates(out, errw io.Writer, path string, cands []plan.Candidate) error {
+	for _, c := range cands {
+		fmt.Fprintf(out, "%s\n  $ %s\n", actionLine(c), join(c.Command))
+		for _, w := range c.Gate.Warnings {
+			fmt.Fprintf(errw, "verifi: %s\n", w)
+		}
+		cmd := exec.Command(c.Command[0], c.Command[1:]...)
 		cmd.Dir = path
 		cmd.Stdout = out
 		cmd.Stderr = errw
 		if err := cmd.Run(); err != nil {
-			return fmt.Errorf("apply %s: %w", a.Name, err)
+			return fmt.Errorf("apply %s: %w", c.Package, err)
 		}
 	}
-	fmt.Fprintln(out, "\nDone. Re-run `verifi status` to confirm, and run your tests.")
+	fmt.Fprintln(out, "\nDone. Re-run `verifi scan` to confirm, and run your tests.")
 	return nil
+}
+
+func actionLine(c plan.Candidate) string {
+	if c.Action == "remove" {
+		return "remove " + c.Package
+	}
+	return fmt.Sprintf("upgrade %s: %s -> %s", c.Package, c.Current, c.Target)
 }
 
 func join(parts []string) string {
