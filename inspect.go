@@ -31,12 +31,7 @@ func runInspect(args []string) error {
 		path = "."
 	}
 
-	lockPath := filepath.Join(path, "package-lock.json")
-	data, err := os.ReadFile(lockPath)
-	if err != nil {
-		return fmt.Errorf("read %s: %w", lockPath, err)
-	}
-	inv, err := inventory.ParseNpmLock(data)
+	inv, err := loadInventory(path)
 	if err != nil {
 		return err
 	}
@@ -58,6 +53,17 @@ func runInspect(args []string) error {
 		printInventory(inv)
 	}
 	return nil
+}
+
+// loadInventory reads a project's lockfile and resolves it to an inventory.
+// Shared by `inspect` and the MCP inspect tool so they cannot drift. npm for now.
+func loadInventory(path string) (*inventory.Inventory, error) {
+	lockPath := filepath.Join(path, "package-lock.json")
+	data, err := os.ReadFile(lockPath)
+	if err != nil {
+		return nil, fmt.Errorf("read %s: %w", lockPath, err)
+	}
+	return inventory.ParseNpmLock(data)
 }
 
 func printInventory(inv *inventory.Inventory) {
