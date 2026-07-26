@@ -34,6 +34,8 @@ VS Code uses `"servers"` and an explicit `"type": "stdio"`.
 ```
 scan_workspace     Scan the project for vulnerable dependencies and their fixes.
 list_dependencies  Resolve the full dependency tree, as inventory or SBOM.
+propose_fix        Propose a gated fix for each vulnerable dependency, without applying it.
+apply_fix          Apply a confirmed, gate-approved fix to the workspace.
 ```
 <!-- END CAPABILITIES -->
 
