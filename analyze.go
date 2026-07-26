@@ -18,6 +18,7 @@ import (
 type analysis struct {
 	inv      *inventory.Inventory
 	findings []finding.Finding
+	cands    []candidate.Candidate // aligned 1:1 with recs; carries distance and residual for the gate
 	recs     []reason.Recommendation
 	imported map[string]bool // packages the project's own code imports
 	dbMeta   *osv.Meta       // cache freshness; nil when --db is used or unstamped
@@ -69,8 +70,9 @@ func analyze(path, dbDir string, offline bool) (*analysis, error) {
 	if !offline {
 		exists = registryExists()
 	}
-	recs := reason.Explain(candidate.Compute(findings, exists, removable))
-	return &analysis{inv: inv, findings: findings, recs: recs, imported: imported, dbMeta: dbMeta}, nil
+	cands := candidate.Compute(findings, exists, removable)
+	recs := reason.Explain(cands)
+	return &analysis{inv: inv, findings: findings, cands: cands, recs: recs, imported: imported, dbMeta: dbMeta}, nil
 }
 
 // registryExists returns a predicate that reports whether a package version is

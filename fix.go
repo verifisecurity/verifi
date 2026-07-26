@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 
@@ -84,17 +85,26 @@ func actionLine(a fix.Action) string {
 }
 
 func applyPlan(path string, plan fix.Plan) error {
+	return applyPlanTo(os.Stdout, os.Stderr, path, plan)
+}
+
+// applyPlanTo runs each action's package-manager command in path, streaming
+// output to out and errw. It is the shared apply core: the terminal `fix
+// --apply` passes the process streams, the apply_fix MCP tool passes a buffer to
+// capture the result. It writes to the project; the caller decides whether that
+// is allowed.
+func applyPlanTo(out, errw io.Writer, path string, plan fix.Plan) error {
 	for _, a := range plan.Actions {
-		fmt.Printf("%s\n  $ %s\n", actionLine(a), join(a.Command))
+		fmt.Fprintf(out, "%s\n  $ %s\n", actionLine(a), join(a.Command))
 		cmd := exec.Command(a.Command[0], a.Command[1:]...)
 		cmd.Dir = path
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
+		cmd.Stdout = out
+		cmd.Stderr = errw
 		if err := cmd.Run(); err != nil {
 			return fmt.Errorf("apply %s: %w", a.Name, err)
 		}
 	}
-	fmt.Println("\nDone. Re-run `verifi status` to confirm, and run your tests.")
+	fmt.Fprintln(out, "\nDone. Re-run `verifi status` to confirm, and run your tests.")
 	return nil
 }
 

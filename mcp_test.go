@@ -46,10 +46,12 @@ func readyCommand(name string) bool {
 }
 
 // TestMcpServe_Golden drives the real server end to end over the npm fixture: a
-// full session (initialize, tools/list, then scan_workspace and
-// list_dependencies calls) asserted against a golden transcript. scan_workspace
-// runs offline so it is deterministic and needs no network. Regenerate with:
-// go test . -update
+// full session (initialize, tools/list, then the tool calls) asserted against a
+// golden transcript. Every call runs offline against the fixture OSV database so
+// it is deterministic and needs no network. propose_fix is read-only;
+// apply_fix is called with confirm=false, so it too writes nothing and stays
+// deterministic (the confirmed apply path runs the package manager and is
+// covered by the opt-in real-repo test). Regenerate with: go test . -update
 func TestMcpServe_Golden(t *testing.T) {
 	reqs := []string{
 		`{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{}}}`,
@@ -57,6 +59,8 @@ func TestMcpServe_Golden(t *testing.T) {
 		`{"jsonrpc":"2.0","id":2,"method":"tools/list"}`,
 		`{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"list_dependencies","arguments":{"workspace":"testdata/npm/vuln"}}}`,
 		`{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"scan_workspace","arguments":{"workspace":"testdata/npm/vuln","db":"testdata/osv","offline":true}}}`,
+		`{"jsonrpc":"2.0","id":5,"method":"tools/call","params":{"name":"propose_fix","arguments":{"workspace":"testdata/npm/vuln","db":"testdata/osv","offline":true}}}`,
+		`{"jsonrpc":"2.0","id":6,"method":"tools/call","params":{"name":"apply_fix","arguments":{"workspace":"testdata/npm/vuln","db":"testdata/osv","offline":true,"confirm":false}}}`,
 	}
 	var out bytes.Buffer
 	if err := newMcpServer().Serve(strings.NewReader(strings.Join(reqs, "\n")+"\n"), &out); err != nil {
