@@ -64,6 +64,12 @@ func main() {
 			os.Exit(1)
 		}
 
+	case "mcp":
+		if err := runMcp(args[1:]); err != nil {
+			fmt.Fprintln(os.Stderr, "verifi:", err)
+			os.Exit(1)
+		}
+
 	case "scan":
 		fmt.Printf("`verifi %s` is coming in a future release. This is a pre-release build.\n", cmd)
 		fmt.Println("Follow along: https://github.com/verifisecurity/verifi")

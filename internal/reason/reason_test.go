@@ -27,7 +27,7 @@ func TestExplain_HonestLimits(t *testing.T) {
 		t.Errorf("confidence = %q, want advisory (never overclaim at raw-OSV depth)", r.Confidence)
 	}
 	joined := strings.Join(r.Limitations, " | ")
-	for _, want := range []string{"Major version bump", "Behaviour not verified", "Code impact not checked"} {
+	for _, want := range []string{"Major version bump", "Not tested", "Code impact not checked"} {
 		if !strings.Contains(joined, want) {
 			t.Errorf("limitations missing %q, got: %s", want, joined)
 		}

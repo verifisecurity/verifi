@@ -9,13 +9,9 @@ fixing one will break your app. So the list sits there, or someone upgrades and 
 afternoon to a broken build.
 
 `verifi` looks at how your project actually uses each package and, for each vulnerable one,
-tells you the version to move to, what it clears, and what it has not checked yet. You get a
+tells you the version to move to, what it clears, and what it has not checked. You get a
 short, honest list of fixes instead of a backlog you are afraid to touch. It is not another
 scanner. Its job starts where detection stops.
-
-Estate-wide response, blocking installs at the registry and coordinating fixes across
-repositories, is the job of the wider [Verifi](https://verifisecurity.com) platform the CLI
-plugs into.
 
 > **Status: v0.1.0, pre-1.0.** The read-only core is here: it scans a project and reasons
 > about each fix. The command surface may still change before 1.0. See
@@ -58,6 +54,7 @@ verifi inspect <path>  Resolve the project's dependencies (--json, --sbom)
 verifi update          Download the OSV database into the local cache
 verifi status <path>   Show what is vulnerable and the fix (--json, --db, --offline)
 verifi fix <path>      Apply the recommended fix, or preview it (--apply, --db, --offline)
+verifi mcp             Serve the tools over MCP on stdio, for your editor
 verifi version         Print the version
 verifi help            Show this help
 ```

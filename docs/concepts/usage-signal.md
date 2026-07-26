@@ -26,11 +26,9 @@ scanners never point this out.
 
 ## What it is, and is not
 
-This is import-level usage: does your code reference the package at all. It is
-the cheap first half of reachability. It is not yet symbol-level reachability,
-whether the specific vulnerable function is reachable through your call graph;
-that is deeper analysis that raises the [confidence](confidence.md) rung, and it
-is on the roadmap.
+This is import-level usage: whether your code references the package at all. It
+does not trace whether the specific vulnerable function inside the package is
+actually reached.
 
 Detection is heuristic: dynamic imports and plugin loaders can hide a real use,
 so "not imported" is a strong hint to review, not an automatic delete.
