@@ -43,8 +43,8 @@ HIGH     lodash 4.17.11   direct
    CVE-2021-23337 (GHSA-35jh-r3h4-6jhm)   Command injection in lodash
    Fix: upgrade to 4.17.21   confidence: advisory
         Clears GHSA-35jh-r3h4-6jhm (fixed in 4.17.21 per OSV), a patch bump from 4.17.11.
-        - Code impact not checked: not yet verified whether your code uses a changed part of the package.
-        - Behaviour not verified: run your tests after upgrading.
+        - Code impact not checked: whether your code uses a part of the package that changed is not checked.
+        - Not tested: run your tests after upgrading.
 
 MEDIUM   minimist 1.2.0   direct
    used: not imported by your code, removing it may clear this
@@ -52,8 +52,6 @@ MEDIUM   minimist 1.2.0   direct
    Fix: remove minimist   confidence: advisory
         Your code does not import it; removing it clears GHSA-xvch-5gv4-984h at no compatibility risk.
         - Usage is heuristic: a dynamic import or a config-referenced loader can hide a real use, so confirm it is unused.
-
-Next: impact (does the fix touch code you use) and behavioural checks.
 ```
 <!-- END EXAMPLE -->
 

@@ -121,7 +121,6 @@ func printStatus(inv *inventory.Inventory, findings []finding.Finding, recs []re
 		}
 		fmt.Println()
 	}
-	fmt.Println("Next: impact (does the fix touch code you use) and behavioural checks.")
 }
 
 func sevRank(s string) int {

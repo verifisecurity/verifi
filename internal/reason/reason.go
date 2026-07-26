@@ -1,14 +1,10 @@
 // Package reason explains a fix candidate: why it clears the advisory, how far
 // the jump is, and, just as important, what has not been checked. The text is
 // templated from structured facts, deterministic and reproducible, never
-// generated. Confidence is stated honestly:
-//
-//   - advisory:   the advisory is cleared by this version. Code impact and
-//     behaviour are not checked. This is the raw-OSV baseline, below structural.
-//   - structural: no symbol the project uses changed (needs impact analysis).
-//   - behavioural: the project's own tests pass on the new version (needs a run).
-//
-// See ADR 0005. Only behavioural earns an unattended fix.
+// generated. Confidence is reported at the advisory level: the advisory is
+// cleared by the recommended version and the size of the version jump is known,
+// but the fix's code impact and its effect on behaviour are not checked, so
+// every recommendation lists those limits explicitly.
 package reason
 
 import (
@@ -25,7 +21,7 @@ type Recommendation struct {
 	Action      string   `json:"action"` // upgrade | none
 	Current     string   `json:"current,omitempty"`
 	Target      string   `json:"target,omitempty"`
-	Confidence  string   `json:"confidence"` // advisory | structural | behavioural
+	Confidence  string   `json:"confidence"` // advisory
 	Reason      string   `json:"reason"`
 	Limitations []string `json:"limitations"`
 	Evidence    []string `json:"evidence"`
@@ -57,8 +53,8 @@ func Explain(cands []candidate.Candidate) []Recommendation {
 		default:
 			r.Reason = fmt.Sprintf("No published version clears %s.", join(c.Residual))
 			r.Limitations = []string{
-				"No safe version to upgrade to yet.",
-				"Consider removing or replacing the package if it is not essential.",
+				"No published version fixes this.",
+				"Consider removing the package if it is not essential.",
 			}
 		}
 		out = append(out, r)
@@ -75,8 +71,8 @@ func limitations(c candidate.Candidate) []string {
 		lim = append(lim, "Minor bump: adds features, breaking changes are possible but uncommon.")
 	}
 	lim = append(lim,
-		"Code impact not checked: not yet verified whether your code uses a changed part of the package.",
-		"Behaviour not verified: run your tests after upgrading.")
+		"Code impact not checked: whether your code uses a part of the package that changed is not checked.",
+		"Not tested: run your tests after upgrading.")
 	if len(c.Residual) > 0 {
 		lim = append(lim, fmt.Sprintf("Still exposed to %s: no published fix.", join(c.Residual)))
 	}
